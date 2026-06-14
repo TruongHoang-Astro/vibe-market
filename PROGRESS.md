@@ -47,6 +47,16 @@
 
 ## ❌ Việc cần làm tiếp theo
 
+> ✅ **Responsive mobile (xong, 14/06/2026):** Fix toàn site ở 375px (verified
+> bằng preview, overflow=0 mọi trang). Navbar gom danh mục/tìm/tài khoản vào
+> hamburger drawer. Footer + lưới sản phẩm dùng `minmax(0,1fr)` (chống phình
+> min-content). Seller & Admin dashboard: sidebar → drawer (hamburger + backdrop),
+> lưới stats/charts/bảng responsive, `min-width:0` chống flex blowout. SellerChat
+> mobile hiện 1 pane + nút back. Rule responsive gom trong `globals.css`.
+>
+> ⏳ **Admin dashboard:** đã responsive nhưng VẪN DÙNG MOCK DATA — cần wire DB thật
+> (KPI từ orders/users/shops, quản lý shop/sản phẩm/đơn) — việc kế tiếp.
+
 ### 🔴 Ưu tiên 1 — Backend (chặn production)
 - [x] **Supabase** — project đã tạo, schema + seed đã chạy, kết nối OK (12 sp).
 - [x] **Giai đoạn 2a — Catalog đọc DB thật** (`lib/supabase/queries.ts`):
