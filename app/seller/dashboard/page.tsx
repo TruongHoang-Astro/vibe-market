@@ -509,10 +509,14 @@ export default function SellerDashboard() {
       <AnimatePresence>
         {showAddProduct && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="overlay" onClick={() => setShowAddProduct(false)} />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowAddProduct(false)}
+              style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+            >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', borderRadius: '20px', padding: '32px', width: '640px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', zIndex: 50, boxShadow: '0 32px 80px rgba(0,0,0,0.2)' }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: 'white', borderRadius: '20px', padding: '32px', width: '640px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,0.2)' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
                 <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '24px', fontWeight: 800 }}>{editingId ? 'Sửa Sản Phẩm' : 'Đăng Sản Phẩm Mới'}</h2>
@@ -607,6 +611,7 @@ export default function SellerDashboard() {
                   </div>
                 </form>
               )}
+            </motion.div>
             </motion.div>
           </>
         )}
