@@ -16,7 +16,7 @@ import { formatPrice, formatNumber } from '@/lib/data/mock-data';
 import { useUser } from '@/lib/supabase/use-user';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
-import { createProduct, updateProduct, deleteProduct, updateShop, getShopOrders } from '@/app/actions/seller';
+import { createProduct, updateProduct, deleteProduct, updateShop, getShopOrders, updateOrderStatus } from '@/app/actions/seller';
 import type { SellerOrder, SellerStats } from '@/app/actions/seller';
 import { uploadChatMedia } from '@/app/actions/chat';
 import SellerChat from './SellerChat';
@@ -36,6 +36,15 @@ const statusColors: Record<string, { bg: string; color: string; label: string }>
   shipping: { bg: '#dcfce7', color: '#15803d', label: 'Đang giao' },
   delivered: { bg: '#f0fdf4', color: '#16a34a', label: 'Đã giao' },
   cancelled: { bg: '#fee2e2', color: '#dc2626', label: 'Đã hủy' },
+};
+
+type OStatus = 'confirmed' | 'shipping' | 'delivered' | 'cancelled';
+const nextActions: Record<string, { label: string; status: OStatus; color: string }[]> = {
+  pending: [{ label: 'Xác nhận', status: 'confirmed', color: '#2563eb' }, { label: 'Hủy', status: 'cancelled', color: '#dc2626' }],
+  confirmed: [{ label: 'Giao hàng', status: 'shipping', color: '#15803d' }, { label: 'Hủy', status: 'cancelled', color: '#dc2626' }],
+  shipping: [{ label: 'Đã giao', status: 'delivered', color: '#16a34a' }],
+  delivered: [],
+  cancelled: [],
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -174,6 +183,13 @@ export default function SellerDashboard() {
     setSavingShop(false);
     if (res.error) { toast.error(res.error); return; }
     toast.success('Đã lưu thông tin gian hàng');
+    loadData();
+  };
+
+  const handleStatus = async (orderId: string, status: OStatus) => {
+    const res = await updateOrderStatus(orderId, status);
+    if (res.error) { toast.error(res.error); return; }
+    toast.success('Đã cập nhật trạng thái đơn');
     loadData();
   };
 
@@ -438,7 +454,7 @@ export default function SellerDashboard() {
                   </div>
                 ) : (
                   <table className="table-base">
-                    <thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Khách</th><th>Doanh thu</th><th>Thanh toán</th><th>Trạng thái</th><th>Ngày</th></tr></thead>
+                    <thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Khách</th><th>Doanh thu</th><th>Trạng thái</th><th>Ngày</th><th>Thao tác</th></tr></thead>
                     <tbody>
                       {sellerOrders.map((order, i) => (
                         <motion.tr key={order.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.06 }}>
@@ -453,13 +469,22 @@ export default function SellerDashboard() {
                           </td>
                           <td style={{ fontSize: '13px' }}>Khách #{order.buyerId.slice(0, 4).toUpperCase()}</td>
                           <td style={{ fontWeight: 700 }}>{formatPrice(order.shopRevenue)}</td>
-                          <td style={{ fontSize: '13px' }}>{order.paymentMethod}</td>
                           <td>
                             <span style={{ background: statusColors[order.status]?.bg, color: statusColors[order.status]?.color, padding: '4px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: 600 }}>
                               {statusColors[order.status]?.label ?? order.status}
                             </span>
                           </td>
                           <td style={{ color: '#6b7280', fontSize: '13px' }}>{new Date(order.date).toLocaleDateString('vi-VN')}</td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                              {(nextActions[order.status] ?? []).map(a => (
+                                <button key={a.status} onClick={() => handleStatus(order.id, a.status)}
+                                  style={{ padding: '5px 12px', border: 'none', borderRadius: '8px', background: a.color, color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                                  {a.label}
+                                </button>
+                              ))}
+                            </div>
+                          </td>
                         </motion.tr>
                       ))}
                     </tbody>

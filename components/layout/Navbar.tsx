@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { useCartStore } from '@/lib/store/cart-store';
 import { useWishlistStore } from '@/lib/store/wishlist-store';
 import { useUser, signOutUser } from '@/lib/supabase/use-user';
+import { createClient } from '@/lib/supabase/client';
 import { categories, formatCount } from '@/lib/data/mock-data';
 
 export default function Navbar() {
@@ -29,10 +30,21 @@ export default function Navbar() {
   const { getTotalItems, openCart } = useCartStore();
   const { items: wishlistItems } = useWishlistStore();
   const { user, profile } = useUser();
+  const [unreadNotif, setUnreadNotif] = useState(0);
   // Tránh hydration mismatch: dữ liệu localStorage chỉ đọc sau khi client mount.
   const totalItems = mounted ? getTotalItems() : 0;
   const totalWishlist = mounted ? wishlistItems.length : 0;
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Tài khoản';
+
+  // Số thông báo chưa đọc
+  useEffect(() => {
+    if (!user) { setUnreadNotif(0); return; }
+    createClient()
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_read', false)
+      .then(({ count }) => setUnreadNotif(count ?? 0));
+  }, [user]);
 
   const handleLogout = async () => {
     setUserMenuOpen(false);
@@ -297,7 +309,9 @@ export default function Navbar() {
                     <Link href="/wishlist" style={{ textDecoration: 'none' }}>
                       <MenuItem icon={<Heart size={16} />} label={`Yêu thích${totalWishlist > 0 ? ` (${totalWishlist})` : ''}`} />
                     </Link>
-                    <MenuItem icon={<Bell size={16} />} label="Thông báo" onClick={() => { setUserMenuOpen(false); toast('Trung tâm thông báo sắp ra mắt'); }} />
+                    <Link href="/notifications" style={{ textDecoration: 'none' }}>
+                      <MenuItem icon={<Bell size={16} />} label={`Thông báo${mounted && unreadNotif > 0 ? ` (${unreadNotif})` : ''}`} />
+                    </Link>
                     {mounted && user && (
                       <>
                         <div style={{ margin: '4px 0', height: '1px', background: 'var(--gray-100)' }} />

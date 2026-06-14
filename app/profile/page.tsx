@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { User, Mail, Phone, Camera, Lock, LogIn, Store, ShieldCheck, Save } from 'lucide-react';
+import { User, Mail, Phone, Camera, Lock, LogIn, Store, ShieldCheck, Save, MapPin, ChevronRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/supabase/use-user';
 import { uploadAvatar } from '@/app/actions/profile';
@@ -175,6 +175,17 @@ export default function ProfilePage() {
             <span>{pwSaving ? 'Đang đổi...' : 'Đổi mật khẩu'}</span>
           </motion.button>
         </div>
+
+        {/* Sổ địa chỉ */}
+        <Link href="/profile/address" style={{ textDecoration: 'none' }}>
+          <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', padding: '18px 20px', marginTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <MapPin size={18} style={{ color: 'var(--primary)' }} />
+              <span style={{ fontWeight: 600, color: 'var(--black)' }}>Sổ địa chỉ giao hàng</span>
+            </div>
+            <ChevronRight size={16} style={{ color: 'var(--gray-300)' }} />
+          </div>
+        </Link>
       </div>
     </div>
   );

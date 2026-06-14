@@ -2,7 +2,7 @@
 // Server Actions cho seller: CRUD sản phẩm + cập nhật gian hàng.
 // RLS đảm bảo chỉ chủ shop thao tác được; ở đây verify thêm để báo lỗi rõ ràng.
 import { createClient, createAdminClient } from '@/lib/supabase/server';
-import type { Database } from '@/lib/supabase/types';
+import type { Database, OrderStatus } from '@/lib/supabase/types';
 
 type ProductUpdate = Database['public']['Tables']['products']['Update'];
 type ShopUpdate = Database['public']['Tables']['shops']['Update'];
@@ -158,6 +158,43 @@ export async function getShopOrders(): Promise<{ orders: SellerOrder[]; stats: S
   const orders = [...map.values()].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const totalRevenue = orders.reduce((s, o) => s + o.shopRevenue, 0);
   return { orders, stats: { totalRevenue, totalOrders: orders.length, monthly: monthlyBuckets(orders) } };
+}
+
+// ---------- Cập nhật trạng thái đơn (seller) + thông báo cho khách ----------
+const STATUS_LABEL: Record<string, string> = {
+  pending: 'Chờ xác nhận', confirmed: 'Đã xác nhận', shipping: 'Đang giao', delivered: 'Đã giao', cancelled: 'Đã hủy',
+};
+
+export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<{ ok?: true; error?: string }> {
+  const c = await ctx();
+  if ('error' in c) return { error: c.error };
+  const { shop } = c;
+  const admin = createAdminClient();
+
+  // Xác minh đơn có chứa sản phẩm của shop này
+  const { data: shopProds } = await admin.from('products').select('id').eq('shop_id', shop.id);
+  const ids = (shopProds ?? []).map(p => p.id);
+  if (!ids.length) return { error: 'Đơn không thuộc shop của bạn' };
+  const { data: oi } = await admin.from('order_items').select('order_id').eq('order_id', orderId).in('product_id', ids).limit(1);
+  if (!oi || !oi.length) return { error: 'Đơn không thuộc shop của bạn' };
+
+  const { data: order } = await admin.from('orders').select('id, user_id').eq('id', orderId).maybeSingle();
+  if (!order) return { error: 'Không tìm thấy đơn' };
+
+  const { error } = await admin.from('orders').update({ status }).eq('id', orderId);
+  if (error) { console.error('updateOrderStatus:', error.message); return { error: 'Cập nhật trạng thái thất bại' }; }
+
+  // Thông báo cho người mua
+  if (order.user_id) {
+    await admin.from('notifications').insert({
+      user_id: order.user_id,
+      type: 'order',
+      title: `Đơn hàng ${orderId}`,
+      message: `Đơn của bạn đã chuyển sang trạng thái: ${STATUS_LABEL[status] ?? status}`,
+      link: '/orders',
+    });
+  }
+  return { ok: true };
 }
 
 export interface ShopInput {

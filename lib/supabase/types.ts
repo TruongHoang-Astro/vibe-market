@@ -283,6 +283,56 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['messages']['Insert']>;
         Relationships: [];
       };
+      addresses: {
+        Row: {
+          id: string;
+          user_id: string;
+          recipient: string;
+          phone: string;
+          address: string;
+          district: string | null;
+          province: string;
+          is_default: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          recipient: string;
+          phone: string;
+          address: string;
+          district?: string | null;
+          province: string;
+          is_default?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['addresses']['Insert']>;
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: string;
+          title: string;
+          message: string;
+          link: string | null;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type?: string;
+          title: string;
+          message?: string;
+          link?: string | null;
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['notifications']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };
