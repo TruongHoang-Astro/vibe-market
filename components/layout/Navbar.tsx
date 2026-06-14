@@ -130,7 +130,7 @@ export default function Navbar() {
           </Link>
 
           {/* Category dropdown */}
-          <div style={{ position: 'relative' }} onMouseEnter={() => setCatMenuOpen(true)} onMouseLeave={() => setCatMenuOpen(false)}>
+          <div className="nav-hide-mobile" style={{ position: 'relative' }} onMouseEnter={() => setCatMenuOpen(true)} onMouseLeave={() => setCatMenuOpen(false)}>
             <button style={{
               display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px',
               borderRadius: 'var(--radius-sm)', border: '1px solid var(--gray-200)',
@@ -173,7 +173,7 @@ export default function Navbar() {
           </div>
 
           {/* Search bar */}
-          <div style={{ flex: 1, position: 'relative', maxWidth: '560px' }}>
+          <div className="nav-hide-mobile" style={{ flex: 1, position: 'relative', maxWidth: '560px' }}>
             <form onSubmit={handleSearchSubmit} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <Search size={18} style={{ position: 'absolute', left: '14px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
               <input
@@ -265,7 +265,7 @@ export default function Navbar() {
             </motion.div>
 
             {/* User menu */}
-            <div style={{ position: 'relative' }} onMouseEnter={() => setUserMenuOpen(true)} onMouseLeave={() => setUserMenuOpen(false)}>
+            <div className="nav-hide-mobile" style={{ position: 'relative' }} onMouseEnter={() => setUserMenuOpen(true)} onMouseLeave={() => setUserMenuOpen(false)}>
               <motion.button whileHover={{ scale: 1.05 }}
                 style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', borderRadius: '99px', background: 'var(--gray-50)', border: '1px solid var(--gray-200)', cursor: 'pointer' }}>
                 <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
@@ -343,6 +343,29 @@ export default function Navbar() {
             transition={{ type: 'spring', damping: 30 }}
             style={{ position: 'fixed', inset: 0, zIndex: 49, background: 'white', padding: '80px 24px 24px', overflowY: 'auto' }}
           >
+            {/* Tìm kiếm */}
+            <form onSubmit={handleSearchSubmit} style={{ position: 'relative', marginBottom: '16px' }}>
+              <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
+              <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Tìm kiếm sản phẩm..."
+                style={{ width: '100%', padding: '12px 16px 12px 44px', border: '2px solid var(--gray-200)', borderRadius: '99px', fontSize: '15px', outline: 'none', fontFamily: 'Inter' }} />
+            </form>
+
+            {/* Tài khoản + liên kết nhanh */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid var(--gray-100)' }}>
+              {mounted && user ? (
+                <div style={{ padding: '8px 12px 12px', fontSize: '15px', fontWeight: 700 }}>Xin chào, {displayName} 👋</div>
+              ) : (
+                <Link href="/login" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none' }}><MenuItem icon={<User size={16} />} label="Đăng nhập / Đăng ký" /></Link>
+              )}
+              <Link href="/profile" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none' }}><MenuItem icon={<User size={16} />} label="Trang cá nhân" /></Link>
+              <Link href="/orders" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none' }}><MenuItem icon={<Package size={16} />} label="Đơn mua" /></Link>
+              <Link href="/wishlist" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none' }}><MenuItem icon={<Heart size={16} />} label={`Yêu thích${mounted && totalWishlist > 0 ? ` (${totalWishlist})` : ''}`} /></Link>
+              <Link href="/notifications" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none' }}><MenuItem icon={<Bell size={16} />} label={`Thông báo${mounted && unreadNotif > 0 ? ` (${unreadNotif})` : ''}`} /></Link>
+              <Link href="/seller/dashboard" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none' }}><MenuItem icon={<Store size={16} />} label="Quản lý bán hàng" /></Link>
+              {mounted && user && <MenuItem icon={<LogOut size={16} />} label="Đăng xuất" danger onClick={() => { setMobileOpen(false); handleLogout(); }} />}
+            </div>
+
+            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--gray-400)', marginBottom: '10px', letterSpacing: '0.5px' }}>DANH MỤC</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {categories.map(cat => (
                 <Link key={cat.id} href={`/products?category=${cat.name}`} style={{ textDecoration: 'none' }}
@@ -361,6 +384,7 @@ export default function Navbar() {
       <style>{`
         @media (max-width: 768px) {
           .mobile-menu-btn { display: flex !important; }
+          .nav-hide-mobile { display: none !important; }
         }
       `}</style>
     </>

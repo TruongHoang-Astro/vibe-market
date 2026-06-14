@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, TrendingUp, Settings,
   Bell, Plus, Edit3, Trash2, Eye, Search,
   Upload, X, Check, Star, Zap, LogOut, LogIn,
-  ArrowUpRight, ArrowDownRight, DollarSign, Tag, MessageCircle, User, Store, Camera,
+  ArrowUpRight, ArrowDownRight, DollarSign, Tag, MessageCircle, User, Store, Camera, Menu,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -83,6 +83,7 @@ function GateView({ title, desc, cta, href }: { title: string; desc: string; cta
 export default function SellerDashboard() {
   const { user, profile, loading } = useUser();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [productForm, setProductForm] = useState({ name: '', category: '', price: '', salePrice: '', stock: '', description: '' });
   const [productImage, setProductImage] = useState('');
@@ -225,8 +226,11 @@ export default function SellerDashboard() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: 'Inter, sans-serif' }}>
+      {/* Backdrop khi mở drawer trên mobile */}
+      {sidebarOpen && <div className="dash-backdrop" onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 55 }} />}
+
       {/* Sidebar */}
-      <aside style={{
+      <aside className={`dash-sidebar ${sidebarOpen ? 'open' : ''}`} style={{
         width: '240px', background: '#0a0a0a', flexShrink: 0,
         display: 'flex', flexDirection: 'column', position: 'fixed',
         top: 0, left: 0, bottom: 0, zIndex: 30, overflowY: 'auto',
@@ -255,7 +259,7 @@ export default function SellerDashboard() {
 
         <nav style={{ padding: '12px 12px', flex: 1 }}>
           {navItems.map(item => (
-            <button key={item.key} onClick={() => setActiveTab(item.key)}
+            <button key={item.key} onClick={() => { setActiveTab(item.key); setSidebarOpen(false); }}
               className={`sidebar-item ${activeTab === item.key ? 'active' : ''}`}
               style={{ width: '100%', background: activeTab === item.key ? 'rgba(153,0,0,0.2)' : 'transparent', border: 'none', marginBottom: '2px', justifyContent: 'flex-start' }}>
               <span style={{ color: activeTab === item.key ? '#ff6666' : 'rgba(255,255,255,0.5)' }}>{item.icon}</span>
@@ -273,11 +277,17 @@ export default function SellerDashboard() {
       </aside>
 
       {/* Main */}
-      <main style={{ marginLeft: '240px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <header style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '0 28px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 20 }}>
-          <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: '20px', fontWeight: 700, color: '#111' }}>
-            {navItems.find(n => n.key === activeTab)?.label || 'Dashboard'}
-          </h1>
+      <main className="dash-main" style={{ marginLeft: '240px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <header style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '0 16px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+            <button className="dash-burger" onClick={() => setSidebarOpen(true)} aria-label="Mở menu"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#111', alignItems: 'center' }}>
+              <Menu size={22} />
+            </button>
+            <h1 className="line-clamp-1" style={{ fontFamily: 'Playfair Display, serif', fontSize: '20px', fontWeight: 700, color: '#111' }}>
+              {navItems.find(n => n.key === activeTab)?.label || 'Dashboard'}
+            </h1>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {activeTab === 'products' && (
               <motion.button whileHover={{ scale: 1.03 }} onClick={openAdd}
@@ -296,12 +306,12 @@ export default function SellerDashboard() {
           </div>
         </header>
 
-        <div style={{ flex: 1, padding: '28px', overflowY: 'auto' }}>
+        <div className="dash-content" style={{ flex: 1, padding: '28px', overflowY: 'auto' }}>
 
           {/* ── DASHBOARD ── */}
           {activeTab === 'dashboard' && (
             <div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+              <div className="dash-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
                 {[
                   { label: 'Doanh thu', val: formatPrice(stats.totalRevenue), icon: <DollarSign size={20} />, change: 'thực', up: true, color: '#990000' },
                   { label: 'Đơn hàng', val: stats.totalOrders, icon: <ShoppingBag size={20} />, change: 'thực', up: true, color: '#2563eb' },
@@ -325,7 +335,7 @@ export default function SellerDashboard() {
                 ))}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '24px' }}>
+              <div className="dash-charts" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '24px' }}>
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                   style={{ background: 'white', borderRadius: '14px', padding: '24px', border: '1px solid #e5e7eb' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
@@ -395,7 +405,7 @@ export default function SellerDashboard() {
           {/* ── PRODUCTS ── */}
           {activeTab === 'products' && (
             <div>
-              <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+              <div className="dash-table-card" style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                 <div style={{ padding: '20px 24px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ position: 'relative' }}>
                     <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
@@ -465,7 +475,7 @@ export default function SellerDashboard() {
           {/* ── ORDERS (thật — đơn chứa sản phẩm của shop) ── */}
           {activeTab === 'orders' && (
             <div>
-              <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+              <div className="dash-table-card" style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                 {sellerOrders.length === 0 ? (
                   <div style={{ padding: '60px', textAlign: 'center', color: '#9ca3af' }}>
                     <ShoppingBag size={48} style={{ marginBottom: '12px', opacity: 0.4 }} />
@@ -517,12 +527,12 @@ export default function SellerDashboard() {
           {/* ── REVENUE (thật) ── */}
           {activeTab === 'revenue' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                {[
+              <div className="dash-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                {([
                   { label: 'Tổng doanh thu', val: formatPrice(stats.totalRevenue) },
                   { label: 'Tổng đơn hàng', val: String(stats.totalOrders) },
                   { label: 'Doanh thu / đơn (TB)', val: formatPrice(stats.totalOrders ? Math.round(stats.totalRevenue / stats.totalOrders) : 0) },
-                ].map((s, i) => (
+                ]).map((s, i) => (
                   <div key={i} style={{ background: 'white', borderRadius: '14px', padding: '20px', border: '1px solid #e5e7eb' }}>
                     <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>{s.label}</div>
                     <div style={{ fontSize: '24px', fontWeight: 800, color: '#111' }}>{s.val}</div>
@@ -547,7 +557,7 @@ export default function SellerDashboard() {
           {/* ── SETTINGS (thật) ── */}
           {activeTab === 'settings' && (
             <div style={{ maxWidth: '720px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+              <div className="dash-table-card" style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                 {/* Ảnh bìa + logo */}
                 <div style={{ position: 'relative', height: '170px', background: shopBanner ? `center / cover no-repeat url(${shopBanner})` : 'linear-gradient(135deg, #0a0a0a, #1a0000)' }}>
                   <label style={{ position: 'absolute', top: '14px', right: '14px', display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: 'rgba(0,0,0,0.55)', color: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>

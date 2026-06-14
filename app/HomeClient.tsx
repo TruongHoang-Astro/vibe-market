@@ -391,6 +391,7 @@ function SellerCTA() {
     <section className="section" ref={ref}>
       <div className="container">
         <motion.div initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.6 }}
+          className="seller-grid"
           style={{ borderRadius: 'var(--radius-xl)', background: 'linear-gradient(135deg, #0a0a0a 0%, #1a0000 60%, #0a0a0a 100%)', padding: 'clamp(40px, 6vw, 80px)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
           {/* BG decoration */}
           <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(153,0,0,0.15)', filter: 'blur(60px)' }} />
@@ -459,7 +460,7 @@ function Testimonials({ reviews }: { reviews: Review[] }) {
           </h2>
         </motion.div>
         <div style={{ position: 'relative' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+          <div className="products-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
             {extReviews.slice(0, 3).map((review, i) => (
               <motion.div key={review.id} initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ delay: i * 0.1, duration: 0.5 }}>
                 <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', padding: '28px', border: '1px solid var(--gray-100)', transition: 'var(--transition)' }}

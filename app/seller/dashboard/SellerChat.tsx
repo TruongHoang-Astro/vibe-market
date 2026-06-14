@@ -1,7 +1,7 @@
 'use client';
 // Chat phía seller: xem & trả lời hội thoại khách gửi đến shop. Realtime.
 import { useEffect, useRef, useState } from 'react';
-import { MessageCircle, Send, User } from 'lucide-react';
+import { MessageCircle, Send, User, ArrowLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface Conv { id: string; buyerId: string; lastMessage: string; lastTime: number }
@@ -78,9 +78,9 @@ export default function SellerChat({ shopId }: { shopId: string }) {
   };
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 140px)', background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+    <div className={`sc-wrap ${activeId ? 'has-active' : ''}`} style={{ display: 'flex', height: 'calc(100vh - 140px)', background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
       {/* Danh sách hội thoại */}
-      <div style={{ width: '300px', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+      <div className="sc-list" style={{ width: '300px', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid #f3f4f6', fontWeight: 700, fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <MessageCircle size={18} style={{ color: '#990000' }} /> Hội thoại ({convs.length})
         </div>
@@ -105,7 +105,7 @@ export default function SellerChat({ shopId }: { shopId: string }) {
       </div>
 
       {/* Khung chat */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div className="sc-thread" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {!activeId ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
             <MessageCircle size={48} style={{ opacity: 0.3, marginBottom: '12px' }} />
@@ -113,7 +113,11 @@ export default function SellerChat({ shopId }: { shopId: string }) {
           </div>
         ) : (
           <>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid #f3f4f6', fontWeight: 700, fontSize: '14px' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #f3f4f6', fontWeight: 700, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button className="sc-back" onClick={() => setActiveId(null)} aria-label="Quay lại danh sách"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#111', alignItems: 'center' }}>
+                <ArrowLeft size={20} />
+              </button>
               {buyerLabel(convs.find(c => c.id === activeId)?.buyerId ?? '')}
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', background: '#fafafa' }}>

@@ -43,7 +43,7 @@ export default function Footer() {
       {/* Feature strip */}
       <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="container" style={{ padding: '32px 24px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
+          <div className="footer-feature" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
             {features.map((f, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div style={{ color: 'var(--primary)', flexShrink: 0 }}>{f.icon}</div>
@@ -59,7 +59,7 @@ export default function Footer() {
 
       {/* Main footer */}
       <div className="container" style={{ padding: '56px 24px 40px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '280px repeat(4, 1fr)', gap: '48px' }}>
+        <div className="footer-main" style={{ display: 'grid', gridTemplateColumns: '280px repeat(4, 1fr)', gap: '48px' }}>
           {/* Brand column */}
           <div>
             <Link href="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>

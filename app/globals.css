@@ -401,25 +401,47 @@ h1, h2, h3 {
 /* ── Responsive: trang sản phẩm ── */
 @media (max-width: 1024px) {
   /* Sidebar ẩn, grid chuyển 2 cột */
-  .products-layout { grid-template-columns: 1fr !important; }
+  .products-layout { grid-template-columns: minmax(0, 1fr) !important; }
   .products-sidebar { display: none !important; }
-  .products-grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
-  .products-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .products-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .products-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 @media (max-width: 640px) {
-  .products-grid-3 { grid-template-columns: 1fr !important; }
-  .products-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
-  .hero-grid    { grid-template-columns: 1fr !important; }
+  .products-grid-3 { grid-template-columns: minmax(0, 1fr) !important; }
+  .products-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .hero-grid    { grid-template-columns: minmax(0, 1fr) !important; }
   .hero-img     { display: none !important; }
-  .flash-grid   { grid-template-columns: repeat(2, 1fr) !important; }
-  .cat-grid     { grid-template-columns: repeat(2, 1fr) !important; }
-  .seller-grid  { grid-template-columns: 1fr !important; }
+  .flash-grid   { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .cat-grid     { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .seller-grid  { grid-template-columns: minmax(0, 1fr) !important; }
   .seller-stats { grid-template-columns: repeat(2, 1fr) !important; }
   .footer-main  { grid-template-columns: 1fr !important; gap: 24px !important; }
+  .footer-feature { grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; }
   .cart-layout,
-  .checkout-layout { grid-template-columns: 1fr !important; }
-  .product-detail { grid-template-columns: 1fr !important; }
-  .product-guarantees { grid-template-columns: 1fr !important; }
+  .checkout-layout { grid-template-columns: minmax(0, 1fr) !important; }
+  .product-detail { grid-template-columns: minmax(0, 1fr) !important; }
+  .product-guarantees { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+/* Dashboard (seller/admin) responsive: sidebar → drawer trên mobile */
+.dash-burger { display: none; }
+.dash-backdrop { display: none; }
+.sc-back { display: none; }
+@media (max-width: 768px) {
+  .sc-list { width: 100% !important; }
+  .sc-wrap.has-active .sc-list { display: none !important; }
+  .sc-wrap:not(.has-active) .sc-thread { display: none !important; }
+  .sc-back { display: inline-flex !important; }
+  .dash-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 60 !important; box-shadow: 8px 0 40px rgba(0,0,0,0.35); }
+  .dash-sidebar.open { transform: translateX(0); }
+  .dash-main { margin-left: 0 !important; }
+  .dash-burger { display: inline-flex !important; }
+  .dash-backdrop { display: block !important; }
+  .dash-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .dash-charts { grid-template-columns: minmax(0, 1fr) !important; }
+  .dash-3 { grid-template-columns: minmax(0, 1fr) !important; }
+  .dash-content { padding: 16px !important; }
+  .dash-table-card { overflow-x: auto !important; }
 }
 
 /* Skeleton loading helpers */
