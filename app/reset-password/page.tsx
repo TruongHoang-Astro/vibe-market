@@ -39,7 +39,7 @@ export default function ResetPasswordPage() {
     <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', background: 'var(--gray-50)' }}>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', padding: '40px', maxWidth: '440px', width: '100%', boxShadow: 'var(--shadow)' }}>
-        <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(153,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+        <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(239,68,68,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
           <ShieldCheck size={28} style={{ color: 'var(--primary)' }} />
         </div>
         <h1 style={{ fontFamily: 'Playfair Display', fontSize: '26px', fontWeight: 800, marginBottom: '8px' }}>Đặt lại mật khẩu</h1>

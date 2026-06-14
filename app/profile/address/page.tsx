@@ -93,7 +93,7 @@ export default function AddressPage() {
 
   return (
     <div style={{ minHeight: '80vh', background: 'var(--gray-50)' }}>
-      <div style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a0000)', padding: '40px 0' }}>
+      <div className="page-hero" style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a0000)', padding: '40px 0' }}>
         <div className="container">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '16px' }}>
             <Link href="/profile" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Tài khoản</Link>
@@ -123,7 +123,7 @@ export default function AddressPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                       <span style={{ fontWeight: 700, fontSize: '15px' }}>{a.recipient}</span>
                       <span style={{ color: 'var(--gray-400)', fontSize: '13px' }}>{a.phone}</span>
-                      {a.is_default && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: 'rgba(153,0,0,0.08)', color: 'var(--primary)', fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '99px' }}><Star size={10} fill="var(--primary)" /> Mặc định</span>}
+                      {a.is_default && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: 'rgba(239,68,68,0.08)', color: 'var(--primary)', fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '99px' }}><Star size={10} fill="var(--primary)" /> Mặc định</span>}
                     </div>
                     <p style={{ fontSize: '14px', color: 'var(--gray-600)', lineHeight: 1.5 }}>
                       {a.address}{a.district ? `, ${a.district}` : ''}, {a.province}

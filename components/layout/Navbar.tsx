@@ -189,7 +189,7 @@ export default function Navbar() {
                   border: '2px solid', borderColor: searchOpen ? 'var(--primary)' : 'var(--gray-200)',
                   borderRadius: '99px', fontSize: '14px', fontFamily: 'Inter', outline: 'none',
                   transition: 'all 0.3s',
-                  boxShadow: searchOpen ? '0 0 0 3px rgba(153,0,0,0.1)' : 'none',
+                  boxShadow: searchOpen ? '0 0 0 3px rgba(239,68,68,0.1)' : 'none',
                 }}
               />
               <button

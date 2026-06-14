@@ -82,7 +82,7 @@ export default function SellerChat({ shopId }: { shopId: string }) {
       {/* Danh sách hội thoại */}
       <div className="sc-list" style={{ width: '300px', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid #f3f4f6', fontWeight: 700, fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <MessageCircle size={18} style={{ color: '#990000' }} /> Hội thoại ({convs.length})
+          <MessageCircle size={18} style={{ color: '#ef4444' }} /> Hội thoại ({convs.length})
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {convs.length === 0 ? (
@@ -92,7 +92,7 @@ export default function SellerChat({ shopId }: { shopId: string }) {
           ) : convs.map(c => (
             <button key={c.id} onClick={() => openConv(c.id)}
               style={{ width: '100%', textAlign: 'left', padding: '14px 18px', border: 'none', borderBottom: '1px solid #f9fafb', background: activeId === c.id ? '#fff0f0' : 'white', cursor: 'pointer', display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg,#990000,#FF0000)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg,#ef4444,#f43f5e)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <User size={18} color="white" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -125,7 +125,7 @@ export default function SellerChat({ shopId }: { shopId: string }) {
                 const isShop = m.sender === 'shop';
                 return (
                   <div key={m.id} style={{ display: 'flex', justifyContent: isShop ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ maxWidth: '70%', background: isShop ? 'linear-gradient(135deg,#990000,#cc2200)' : 'white', color: isShop ? 'white' : '#111', borderRadius: '14px', border: isShop ? 'none' : '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                    <div style={{ maxWidth: '70%', background: isShop ? 'linear-gradient(135deg,#ef4444,#dc2626)' : 'white', color: isShop ? 'white' : '#111', borderRadius: '14px', border: isShop ? 'none' : '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                       {m.type === 'text' && <div style={{ padding: '9px 13px', fontSize: '14px', lineHeight: 1.5, wordBreak: 'break-word' }}>{m.content}</div>}
                       {m.type === 'image' && <img src={m.content} alt="" style={{ maxWidth: '220px', display: 'block', cursor: 'pointer' }} onClick={() => window.open(m.content, '_blank')} />}
                       {m.type === 'video' && <video src={m.content} controls style={{ maxWidth: '240px', display: 'block' }} />}
@@ -140,9 +140,9 @@ export default function SellerChat({ shopId }: { shopId: string }) {
             <div style={{ padding: '12px 16px', borderTop: '1px solid #f3f4f6', display: 'flex', gap: '10px', alignItems: 'center' }}>
               <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
                 placeholder="Nhập tin nhắn trả lời khách..." style={{ flex: 1, padding: '10px 16px', border: '1.5px solid #e5e7eb', borderRadius: '20px', fontSize: '14px', fontFamily: 'Inter', outline: 'none' }}
-                onFocus={e => (e.target.style.borderColor = '#990000')} onBlur={e => (e.target.style.borderColor = '#e5e7eb')} />
+                onFocus={e => (e.target.style.borderColor = '#ef4444')} onBlur={e => (e.target.style.borderColor = '#e5e7eb')} />
               <button onClick={send} disabled={sending || !text.trim()}
-                style={{ width: '40px', height: '40px', borderRadius: '50%', background: text.trim() ? 'linear-gradient(135deg,#990000,#cc2200)' : '#e5e7eb', border: 'none', cursor: text.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
+                style={{ width: '40px', height: '40px', borderRadius: '50%', background: text.trim() ? 'linear-gradient(135deg,#ef4444,#dc2626)' : '#e5e7eb', border: 'none', cursor: text.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
                 <Send size={16} />
               </button>
             </div>

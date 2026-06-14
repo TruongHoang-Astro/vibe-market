@@ -165,7 +165,7 @@ function ProductsContent({ allProducts, categories }: { allProducts: Product[]; 
                     style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, background: 'white', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--gray-100)', padding: '8px', minWidth: '200px', zIndex: 20 }}>
                     {sortOptions.map(opt => (
                       <div key={opt.value} onClick={() => { setSortBy(opt.value); setSortOpen(false); }}
-                        style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '14px', fontWeight: sortBy === opt.value ? 600 : 400, color: sortBy === opt.value ? 'var(--primary)' : 'var(--gray-700)', background: sortBy === opt.value ? 'rgba(153,0,0,0.06)' : 'transparent' }}
+                        style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '14px', fontWeight: sortBy === opt.value ? 600 : 400, color: sortBy === opt.value ? 'var(--primary)' : 'var(--gray-700)', background: sortBy === opt.value ? 'rgba(239,68,68,0.06)' : 'transparent' }}
                         onMouseEnter={e => { if (sortBy !== opt.value) (e.currentTarget as HTMLElement).style.background = 'var(--gray-50)'; }}
                         onMouseLeave={e => { if (sortBy !== opt.value) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                       >
@@ -210,7 +210,7 @@ function ProductsContent({ allProducts, categories }: { allProducts: Product[]; 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {['Tất cả', ...categories.map(c => c.name)].map(cat => (
                   <button key={cat} onClick={() => setSelectedCategory(cat)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 'var(--radius-sm)', background: selectedCategory === cat ? 'rgba(153,0,0,0.08)' : 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: '14px', fontWeight: selectedCategory === cat ? 600 : 400, color: selectedCategory === cat ? 'var(--primary)' : 'var(--gray-700)', transition: 'all 0.15s' }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 'var(--radius-sm)', background: selectedCategory === cat ? 'rgba(239,68,68,0.08)' : 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: '14px', fontWeight: selectedCategory === cat ? 600 : 400, color: selectedCategory === cat ? 'var(--primary)' : 'var(--gray-700)', transition: 'all 0.15s' }}
                     onMouseEnter={e => { if (selectedCategory !== cat) (e.currentTarget as HTMLButtonElement).style.background = 'var(--gray-50)'; }}
                     onMouseLeave={e => { if (selectedCategory !== cat) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                   >
@@ -227,7 +227,7 @@ function ProductsContent({ allProducts, categories }: { allProducts: Product[]; 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {priceRanges.map((range, i) => (
                   <button key={i} onClick={() => setSelectedPrice(selectedPrice === i ? null : i)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: 'var(--radius-sm)', background: selectedPrice === i ? 'rgba(153,0,0,0.08)' : 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: '14px', fontWeight: selectedPrice === i ? 600 : 400, color: selectedPrice === i ? 'var(--primary)' : 'var(--gray-700)', transition: 'all 0.15s' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: 'var(--radius-sm)', background: selectedPrice === i ? 'rgba(239,68,68,0.08)' : 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: '14px', fontWeight: selectedPrice === i ? 600 : 400, color: selectedPrice === i ? 'var(--primary)' : 'var(--gray-700)', transition: 'all 0.15s' }}
                     onMouseEnter={e => { if (selectedPrice !== i) (e.currentTarget as HTMLButtonElement).style.background = 'var(--gray-50)'; }}
                     onMouseLeave={e => { if (selectedPrice !== i) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                   >
@@ -245,7 +245,7 @@ function ProductsContent({ allProducts, categories }: { allProducts: Product[]; 
               <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>Đánh giá</h4>
               {[5, 4, 3].map(stars => (
                 <button key={stars} onClick={() => setMinRating(minRating === stars ? null : stars)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: minRating === stars ? 'rgba(153,0,0,0.08)' : 'transparent', border: 'none', cursor: 'pointer', width: '100%', transition: 'all 0.15s' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: minRating === stars ? 'rgba(239,68,68,0.08)' : 'transparent', border: 'none', cursor: 'pointer', width: '100%', transition: 'all 0.15s' }}
                   onMouseEnter={e => { if (minRating !== stars) (e.currentTarget as HTMLButtonElement).style.background = 'var(--gray-50)'; }}
                   onMouseLeave={e => { if (minRating !== stars) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}>
                   <div style={{ display: 'flex', gap: '2px' }}>{[...Array(5)].map((_, i) => <Star key={i} size={13} fill={i < stars ? '#f59e0b' : '#e5e5e5'} color={i < stars ? '#f59e0b' : '#e5e5e5'} />)}</div>
@@ -263,7 +263,7 @@ function ProductsContent({ allProducts, categories }: { allProducts: Product[]; 
                 { key: 'sale',  label: '🏷️ Đang giảm giá', active: saleOnly, toggle: () => setSaleOnly(!saleOnly) },
               ].map(opt => (
                 <button key={opt.key} onClick={opt.toggle}
-                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: 'var(--radius-sm)', background: opt.active ? 'rgba(153,0,0,0.08)' : 'transparent', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', fontSize: '14px', fontWeight: opt.active ? 600 : 400, color: opt.active ? 'var(--primary)' : 'var(--gray-700)', transition: 'all 0.15s' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: 'var(--radius-sm)', background: opt.active ? 'rgba(239,68,68,0.08)' : 'transparent', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', fontSize: '14px', fontWeight: opt.active ? 600 : 400, color: opt.active ? 'var(--primary)' : 'var(--gray-700)', transition: 'all 0.15s' }}
                   onMouseEnter={e => { if (!opt.active) (e.currentTarget as HTMLButtonElement).style.background = 'var(--gray-50)'; }}
                   onMouseLeave={e => { if (!opt.active) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}>
                   <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${opt.active ? 'var(--primary)' : 'var(--gray-300)'}`, background: opt.active ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>

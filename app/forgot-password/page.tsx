@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
           </div>
         ) : (
           <>
-            <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(153,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(239,68,68,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
               <KeyRound size={28} style={{ color: 'var(--primary)' }} />
             </div>
             <h1 style={{ fontFamily: 'Playfair Display', fontSize: '26px', fontWeight: 800, marginBottom: '8px' }}>Quên mật khẩu?</h1>

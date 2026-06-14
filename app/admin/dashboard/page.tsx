@@ -32,7 +32,7 @@ const statusColors: Record<string, { bg: string; color: string; label: string }>
 };
 
 const pieData = [
-  { name: 'Thời Trang', value: 35, color: '#990000' },
+  { name: 'Thời Trang', value: 35, color: '#ef4444' },
   { name: 'Điện Tử', value: 28, color: '#2563eb' },
   { name: 'Làm Đẹp', value: 20, color: '#ec4899' },
   { name: 'Khác', value: 17, color: '#f59e0b' },
@@ -65,7 +65,7 @@ export default function AdminDashboard() {
       <aside className={`dash-sidebar ${sidebarOpen ? 'open' : ''}`} style={{ width: '240px', background: 'linear-gradient(180deg, #0a0a0a 0%, #1a0000 100%)', flexShrink: 0, display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 30, overflowY: 'auto' }}>
         <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #990000, #FF0000)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #ef4444, #f43f5e)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Zap size={18} color="white" fill="white" />
             </div>
             <div>
@@ -77,7 +77,7 @@ export default function AdminDashboard() {
 
         <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #990000, #FF0000)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #ef4444, #f43f5e)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Shield size={18} color="white" />
             </div>
             <div>
@@ -93,16 +93,16 @@ export default function AdminDashboard() {
               style={{
                 width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px',
                 borderRadius: '8px', border: 'none', cursor: 'pointer', marginBottom: '2px',
-                background: activeTab === item.key ? 'rgba(153,0,0,0.25)' : 'transparent',
+                background: activeTab === item.key ? 'rgba(239,68,68,0.25)' : 'transparent',
                 transition: 'all 0.15s', textAlign: 'left',
               }}
               onMouseEnter={e => { if (activeTab !== item.key) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)'; }}
               onMouseLeave={e => { if (activeTab !== item.key) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
             >
-              <span style={{ color: activeTab === item.key ? '#ff6666' : 'rgba(255,255,255,0.45)', flexShrink: 0 }}>{item.icon}</span>
+              <span style={{ color: activeTab === item.key ? '#fca5a5' : 'rgba(255,255,255,0.45)', flexShrink: 0 }}>{item.icon}</span>
               <span style={{ color: activeTab === item.key ? 'white' : 'rgba(255,255,255,0.55)', fontSize: '14px', fontWeight: activeTab === item.key ? 600 : 400 }}>{item.label}</span>
               {item.key === 'shops' && (
-                <span style={{ marginLeft: 'auto', background: '#990000', color: 'white', fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '99px' }}>3</span>
+                <span style={{ marginLeft: 'auto', background: '#ef4444', color: 'white', fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '99px' }}>3</span>
               )}
             </button>
           ))}
@@ -136,14 +136,14 @@ export default function AdminDashboard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div className="nav-hide-mobile" style={{ position: 'relative' }}>
               <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-              <input type="text" placeholder="Tìm kiếm..." style={{ padding: '9px 12px 9px 34px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', width: '220px', fontFamily: 'Inter', background: '#f8fafc' }} onFocus={e => (e.target.style.borderColor = '#990000')} onBlur={e => (e.target.style.borderColor = '#e2e8f0')} />
+              <input type="text" placeholder="Tìm kiếm..." style={{ padding: '9px 12px 9px 34px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', width: '220px', fontFamily: 'Inter', background: '#f8fafc' }} onFocus={e => (e.target.style.borderColor = '#ef4444')} onBlur={e => (e.target.style.borderColor = '#e2e8f0')} />
             </div>
             <button style={{ position: 'relative', background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer', color: '#475569' }}>
               <Bell size={18} />
-              <span style={{ position: 'absolute', top: '4px', right: '4px', width: '8px', height: '8px', background: '#990000', borderRadius: '50%', border: '2px solid white' }} />
+              <span style={{ position: 'absolute', top: '4px', right: '4px', width: '8px', height: '8px', background: '#ef4444', borderRadius: '50%', border: '2px solid white' }} />
             </button>
             <div className="nav-hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: '#f8fafc', borderRadius: '10px', border: '1.5px solid #e2e8f0' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #990000, #FF0000)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #ef4444, #f43f5e)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Shield size={14} color="white" />
               </div>
               <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>Admin</span>
@@ -159,7 +159,7 @@ export default function AdminDashboard() {
               {/* KPI Cards */}
               <div className="dash-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
                 {[
-                  { label: 'Tổng doanh thu', val: formatPrice(totalRevenue * 100), icon: <DollarSign size={20} />, change: '+24.5%', up: true, color: '#990000', sub: 'Tháng này' },
+                  { label: 'Tổng doanh thu', val: formatPrice(totalRevenue * 100), icon: <DollarSign size={20} />, change: '+24.5%', up: true, color: '#ef4444', sub: 'Tháng này' },
                   { label: 'Tổng người dùng', val: formatNumber(totalUsers), icon: <Users size={20} />, change: '+8.2%', up: true, color: '#2563eb', sub: `+${formatNumber(1240)} tuần này` },
                   { label: 'Gian hàng đang hoạt động', val: formatNumber(totalShops), icon: <Store size={20} />, change: '+3 chờ duyệt', up: true, color: '#16a34a', sub: 'Cần xem xét: 3' },
                   { label: 'Đơn hàng hôm nay', val: formatNumber(totalOrders), icon: <ShoppingBag size={20} />, change: '+12.8%', up: true, color: '#f59e0b', sub: 'So với hôm qua' },
@@ -199,7 +199,7 @@ export default function AdminDashboard() {
                       <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={v => `${(v / 1000000).toFixed(0)}M`} />
                       <Tooltip formatter={(v) => formatPrice(Number(v))} contentStyle={{ borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
-                      <Line type="monotone" dataKey="revenue" stroke="#990000" strokeWidth={2.5} dot={{ fill: '#990000', r: 4, strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 7 }} />
+                      <Line type="monotone" dataKey="revenue" stroke="#ef4444" strokeWidth={2.5} dot={{ fill: '#ef4444', r: 4, strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 7 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </motion.div>
@@ -280,7 +280,7 @@ export default function AdminDashboard() {
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{formatNumber(product.sold)} đã bán</div>
-                          <div style={{ fontSize: '11px', color: '#990000', fontWeight: 600 }}>{formatPrice(product.price)}</div>
+                          <div style={{ fontSize: '11px', color: '#ef4444', fontWeight: 600 }}>{formatPrice(product.price)}</div>
                         </div>
                       </div>
                     ))}
@@ -296,7 +296,7 @@ export default function AdminDashboard() {
               <div className="dash-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '20px' }}>
                 {[
                   { label: 'Tổng người dùng', val: formatNumber(totalUsers), color: '#2563eb', icon: <Users size={18} /> },
-                  { label: 'Người bán', val: formatNumber(totalShops), color: '#990000', icon: <Store size={18} /> },
+                  { label: 'Người bán', val: formatNumber(totalShops), color: '#ef4444', icon: <Store size={18} /> },
                   { label: 'Bị khóa', val: '42', color: '#dc2626', icon: <XCircle size={18} /> },
                 ].map((s, i) => (
                   <div key={i} style={{ background: 'white', borderRadius: '12px', padding: '16px 20px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -312,12 +312,12 @@ export default function AdminDashboard() {
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     {['Tất cả', 'Người mua', 'Người bán', 'Bị khóa'].map(tab => (
-                      <button key={tab} style={{ padding: '7px 14px', borderRadius: '99px', border: '1.5px solid #e2e8f0', background: tab === 'Tất cả' ? '#990000' : 'white', color: tab === 'Tất cả' ? 'white' : '#475569', fontWeight: tab === 'Tất cả' ? 700 : 400, fontSize: '13px', cursor: 'pointer' }}>{tab}</button>
+                      <button key={tab} style={{ padding: '7px 14px', borderRadius: '99px', border: '1.5px solid #e2e8f0', background: tab === 'Tất cả' ? '#ef4444' : 'white', color: tab === 'Tất cả' ? 'white' : '#475569', fontWeight: tab === 'Tất cả' ? 700 : 400, fontSize: '13px', cursor: 'pointer' }}>{tab}</button>
                     ))}
                   </div>
                   <div style={{ position: 'relative' }}>
                     <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                    <input placeholder="Tìm người dùng..." style={{ padding: '8px 10px 8px 30px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '13px', outline: 'none', fontFamily: 'Inter', background: '#f8fafc' }} onFocus={e => (e.target.style.borderColor = '#990000')} onBlur={e => (e.target.style.borderColor = '#e2e8f0')} />
+                    <input placeholder="Tìm người dùng..." style={{ padding: '8px 10px 8px 30px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '13px', outline: 'none', fontFamily: 'Inter', background: '#f8fafc' }} onFocus={e => (e.target.style.borderColor = '#ef4444')} onBlur={e => (e.target.style.borderColor = '#e2e8f0')} />
                   </div>
                 </div>
                 <table className="table-base">
@@ -336,7 +336,7 @@ export default function AdminDashboard() {
                         </td>
                         <td style={{ fontSize: '13px', color: '#475569' }}>{user.email}</td>
                         <td>
-                          <span style={{ padding: '3px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: 700, background: user.role === 'seller' ? 'rgba(153,0,0,0.1)' : '#eff6ff', color: user.role === 'seller' ? '#990000' : '#2563eb' }}>
+                          <span style={{ padding: '3px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: 700, background: user.role === 'seller' ? 'rgba(239,68,68,0.1)' : '#eff6ff', color: user.role === 'seller' ? '#ef4444' : '#2563eb' }}>
                             {user.role === 'seller' ? '🏪 Người bán' : '🛒 Người mua'}
                           </span>
                         </td>
@@ -369,7 +369,7 @@ export default function AdminDashboard() {
               <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
                 {[{ key: 'all', label: 'Tất cả' }, { key: 'pending', label: '⏳ Chờ duyệt (3)' }, { key: 'active', label: '✓ Đang hoạt động' }].map(tab => (
                   <button key={tab.key} onClick={() => setShopFilter(tab.key as typeof shopFilter)}
-                    style={{ padding: '8px 16px', borderRadius: '99px', border: '1.5px solid #e2e8f0', background: shopFilter === tab.key ? '#990000' : 'white', color: shopFilter === tab.key ? 'white' : '#475569', fontWeight: shopFilter === tab.key ? 700 : 400, fontSize: '13px', cursor: 'pointer' }}>
+                    style={{ padding: '8px 16px', borderRadius: '99px', border: '1.5px solid #e2e8f0', background: shopFilter === tab.key ? '#ef4444' : 'white', color: shopFilter === tab.key ? 'white' : '#475569', fontWeight: shopFilter === tab.key ? 700 : 400, fontSize: '13px', cursor: 'pointer' }}>
                     {tab.label}
                   </button>
                 ))}
@@ -446,7 +446,7 @@ export default function AdminDashboard() {
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <div style={{ position: 'relative' }}>
                     <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                    <input placeholder="Tìm sản phẩm..." style={{ padding: '8px 10px 8px 30px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '13px', outline: 'none', fontFamily: 'Inter', background: '#f8fafc', width: '220px' }} onFocus={e => (e.target.style.borderColor = '#990000')} onBlur={e => (e.target.style.borderColor = '#e2e8f0')} />
+                    <input placeholder="Tìm sản phẩm..." style={{ padding: '8px 10px 8px 30px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '13px', outline: 'none', fontFamily: 'Inter', background: '#f8fafc', width: '220px' }} onFocus={e => (e.target.style.borderColor = '#ef4444')} onBlur={e => (e.target.style.borderColor = '#e2e8f0')} />
                   </div>
                 </div>
               </div>
@@ -461,9 +461,9 @@ export default function AdminDashboard() {
                           <span className="line-clamp-1" style={{ fontSize: '13px', fontWeight: 500, maxWidth: '180px' }}>{product.name}</span>
                         </div>
                       </td>
-                      <td style={{ fontSize: '13px', color: '#990000', fontWeight: 600 }}>{product.shopName}</td>
+                      <td style={{ fontSize: '13px', color: '#ef4444', fontWeight: 600 }}>{product.shopName}</td>
                       <td style={{ fontSize: '13px', color: '#475569' }}>{product.category}</td>
-                      <td style={{ fontWeight: 700, fontSize: '14px', color: '#990000' }}>{formatPrice(product.price)}</td>
+                      <td style={{ fontWeight: 700, fontSize: '14px', color: '#ef4444' }}>{formatPrice(product.price)}</td>
                       <td style={{ fontWeight: 600 }}>{formatNumber(product.sold)}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -495,7 +495,7 @@ export default function AdminDashboard() {
                 <tbody>
                   {orders.map((order, i) => (
                     <tr key={order.id}>
-                      <td style={{ fontWeight: 700, color: '#990000', fontSize: '13px' }}>{order.id}</td>
+                      <td style={{ fontWeight: 700, color: '#ef4444', fontSize: '13px' }}>{order.id}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <img src={order.products[0].image} alt="" style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover' }} />

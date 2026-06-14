@@ -40,7 +40,7 @@ export default function OrdersClient({ orders, loggedIn }: { orders: Order[]; lo
   return (
     <div style={{ minHeight: '80vh', background: 'var(--gray-50)' }}>
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a0000)', padding: '40px 0' }}>
+      <div className="page-hero" style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a0000)', padding: '40px 0' }}>
         <div className="container">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '16px' }}>
             <Link href="/" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Trang chủ</Link>
@@ -164,7 +164,7 @@ export default function OrdersClient({ orders, loggedIn }: { orders: Order[]; lo
                                 const shopInfo = getShopInfo(order);
                                 return shopInfo ? (
                                   <motion.button whileHover={{ scale: 1.03 }} onClick={() => openChat(shopInfo.id, shopInfo.name, shopInfo.logo)}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'rgba(153,0,0,0.06)', border: '2px solid rgba(153,0,0,0.2)', borderRadius: '10px', color: 'var(--primary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
+                                    style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'rgba(239,68,68,0.06)', border: '2px solid rgba(239,68,68,0.2)', borderRadius: '10px', color: 'var(--primary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
                                     <MessageCircle size={14} /> Chat shop
                                   </motion.button>
                                 ) : null;

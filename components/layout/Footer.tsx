@@ -89,7 +89,7 @@ export default function Footer() {
               {[
                 { icon: <MessageCircle size={16} />, color: '#1877F2' },
                 { icon: <Camera size={16} />, color: '#E4405F' },
-                { icon: <Play size={16} />, color: '#FF0000' },
+                { icon: <Play size={16} />, color: '#f43f5e' },
                 { icon: <Send size={16} />, color: '#1DA1F2' },
               ].map((s, i) => (
                 <button key={i} style={{
@@ -126,7 +126,7 @@ export default function Footer() {
         </div>
 
         {/* Newsletter */}
-        <div style={{ marginTop: '48px', padding: '32px', borderRadius: 'var(--radius-lg)', background: 'rgba(153,0,0,0.15)', border: '1px solid rgba(153,0,0,0.3)' }}>
+        <div style={{ marginTop: '48px', padding: '32px', borderRadius: 'var(--radius-lg)', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px' }}>
             <div>
               <h3 style={{ fontFamily: 'Playfair Display', fontSize: '22px', fontWeight: 700, marginBottom: '6px' }}>Đăng ký nhận ưu đãi</h3>

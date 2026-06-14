@@ -15,7 +15,7 @@ interface Notif {
 const iconOf = (t: string) =>
   t === 'order' ? <Package size={18} /> : t === 'message' ? <MessageCircle size={18} /> : t === 'promo' ? <Tag size={18} /> : <Bell size={18} />;
 const colorOf = (t: string) =>
-  t === 'order' ? '#2563eb' : t === 'message' ? '#990000' : t === 'promo' ? '#16a34a' : '#f59e0b';
+  t === 'order' ? '#2563eb' : t === 'message' ? '#ef4444' : t === 'promo' ? '#16a34a' : '#f59e0b';
 
 function fmtRel(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -71,7 +71,7 @@ export default function NotificationsPage() {
 
   return (
     <div style={{ minHeight: '80vh', background: 'var(--gray-50)' }}>
-      <div style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a0000)', padding: '40px 0' }}>
+      <div className="page-hero" style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a0000)', padding: '40px 0' }}>
         <div className="container">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '16px' }}>
             <Link href="/" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Trang chủ</Link>
@@ -102,7 +102,7 @@ export default function NotificationsPage() {
             {items.map((n, i) => (
               <motion.button key={n.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
                 onClick={() => open(n)}
-                style={{ textAlign: 'left', display: 'flex', gap: '14px', alignItems: 'flex-start', padding: '16px 18px', background: n.is_read ? 'white' : '#fff8f8', border: `1px solid ${n.is_read ? 'var(--gray-100)' : 'rgba(153,0,0,0.2)'}`, borderRadius: 'var(--radius-lg)', cursor: 'pointer', width: '100%' }}>
+                style={{ textAlign: 'left', display: 'flex', gap: '14px', alignItems: 'flex-start', padding: '16px 18px', background: n.is_read ? 'white' : '#fff8f8', border: `1px solid ${n.is_read ? 'var(--gray-100)' : 'rgba(239,68,68,0.2)'}`, borderRadius: 'var(--radius-lg)', cursor: 'pointer', width: '100%' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${colorOf(n.type)}18`, color: colorOf(n.type), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {iconOf(n.type)}
                 </div>

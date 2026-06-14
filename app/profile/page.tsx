@@ -97,7 +97,7 @@ export default function ProfilePage() {
 
   return (
     <div style={{ minHeight: '80vh', background: 'var(--gray-50)' }}>
-      <div style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a0000)', padding: '40px 0' }}>
+      <div className="page-hero" style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a0000)', padding: '40px 0' }}>
         <div className="container">
           <h1 style={{ fontFamily: 'Playfair Display', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, color: 'white' }}>Tài Khoản Của Tôi</h1>
         </div>
@@ -119,7 +119,7 @@ export default function ProfilePage() {
             </div>
             <div>
               <div style={{ fontSize: '20px', fontWeight: 800 }}>{fullName || 'Chưa đặt tên'}</div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '6px', background: 'rgba(153,0,0,0.08)', color: 'var(--primary)', fontSize: '12px', fontWeight: 700, padding: '3px 10px', borderRadius: '99px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '6px', background: 'rgba(239,68,68,0.08)', color: 'var(--primary)', fontSize: '12px', fontWeight: 700, padding: '3px 10px', borderRadius: '99px' }}>
                 {role === 'seller' ? <Store size={12} /> : <ShieldCheck size={12} />} {roleLabel[role]}
               </div>
             </div>

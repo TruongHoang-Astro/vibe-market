@@ -108,14 +108,14 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
       <div style={{
         maxWidth: '72%',
         background: isBuyer
-          ? 'linear-gradient(135deg, var(--primary), #cc2200)'
+          ? 'linear-gradient(135deg, var(--primary), #dc2626)'
           : 'var(--gray-100)',
         color: isBuyer ? 'white' : 'var(--black)',
         borderRadius: '18px',
         borderBottomRightRadius: isBuyer ? '4px' : '18px',
         borderBottomLeftRadius: isBuyer ? '18px' : '4px',
         overflow: 'hidden',
-        boxShadow: isBuyer ? '0 2px 8px rgba(153,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
+        boxShadow: isBuyer ? '0 2px 8px rgba(239,68,68,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
       }}>
         {/* Content */}
         {msg.type === 'text' && (
@@ -398,13 +398,13 @@ function MessageView({ conversationId }: { conversationId: string }) {
             <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
               <button onClick={() => openFilePicker('image/*')} title="Gửi ảnh"
                 style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'var(--gray-50)', border: '1.5px solid var(--gray-200)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gray-500)', transition: 'all 0.2s' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(153,0,0,0.08)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--primary)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--primary)'; }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.08)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--primary)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--primary)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--gray-50)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--gray-200)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--gray-500)'; }}>
                 <Image size={15} />
               </button>
               <button onClick={() => openFilePicker('video/*')} title="Gửi video"
                 style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'var(--gray-50)', border: '1.5px solid var(--gray-200)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gray-500)', transition: 'all 0.2s' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(153,0,0,0.08)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--primary)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--primary)'; }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.08)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--primary)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--primary)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--gray-50)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--gray-200)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--gray-500)'; }}>
                 <Video size={15} />
               </button>
@@ -430,7 +430,7 @@ function MessageView({ conversationId }: { conversationId: string }) {
             {/* Send / Mic button */}
             {text.trim() ? (
               <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={handleSendText}
-                style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #cc2200)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
+                style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #dc2626)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
                 <Send size={16} />
               </motion.button>
             ) : (
@@ -596,10 +596,10 @@ export default function ChatWidget() {
           style={{
             position: 'fixed', bottom: '90px', right: '24px',
             width: '54px', height: '54px', borderRadius: '50%',
-            background: isOpen ? 'var(--gray-700)' : 'linear-gradient(135deg, var(--primary), #cc2200)',
+            background: isOpen ? 'var(--gray-700)' : 'linear-gradient(135deg, var(--primary), #dc2626)',
             border: 'none', cursor: 'pointer', zIndex: 56,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', boxShadow: '0 6px 20px rgba(153,0,0,0.4)',
+            color: 'white', boxShadow: '0 6px 20px rgba(239,68,68,0.4)',
             transition: 'background 0.25s',
           }}
         >

@@ -171,7 +171,7 @@ export default function ProductDetailClient({
               <span style={{ fontSize: '13px', color: 'var(--gray-500)' }}>Còn <strong style={{ color: product.stock < 20 ? '#ef4444' : 'var(--black)' }}>{product.stock}</strong> sp</span>
             </div>
 
-            <div style={{ background: 'linear-gradient(135deg, #fff0f0, #fff)', border: '1px solid rgba(153,0,0,0.12)', borderRadius: 'var(--radius)', padding: '20px', marginBottom: '24px' }}>
+            <div style={{ background: 'linear-gradient(135deg, #fff0f0, #fff)', border: '1px solid rgba(239,68,68,0.12)', borderRadius: 'var(--radius)', padding: '20px', marginBottom: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
                 <span style={{ fontFamily: 'Playfair Display', fontSize: '32px', fontWeight: 800, color: 'var(--primary)' }}>{formatPrice(product.price)}</span>
                 {discount > 0 && (
@@ -237,7 +237,7 @@ export default function ProductDetailClient({
             <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleAddCart}
                 style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '15px', borderRadius: '14px', border: '2px solid var(--primary)', background: 'white', color: 'var(--primary)', fontWeight: 700, fontSize: '15px', cursor: 'pointer', transition: 'all 0.25s' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(153,0,0,0.05)'; }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.05)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'white'; }}>
                 <ShoppingCart size={18} />
                 {addedAnimation ? (
@@ -251,7 +251,7 @@ export default function ProductDetailClient({
                 <span><Zap size={18} /> Mua ngay</span>
               </motion.button>
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleWishlist}
-                style={{ padding: '15px', borderRadius: '14px', border: '2px solid', borderColor: wished ? 'var(--primary)' : 'var(--gray-200)', background: wished ? 'rgba(153,0,0,0.05)' : 'white', cursor: 'pointer', transition: 'all 0.2s' }}>
+                style={{ padding: '15px', borderRadius: '14px', border: '2px solid', borderColor: wished ? 'var(--primary)' : 'var(--gray-200)', background: wished ? 'rgba(239,68,68,0.05)' : 'white', cursor: 'pointer', transition: 'all 0.2s' }}>
                 <Heart size={20} fill={wished ? 'var(--primary)' : 'none'} color={wished ? 'var(--primary)' : 'var(--gray-400)'} />
               </motion.button>
               <motion.button whileHover={{ scale: 1.05 }}

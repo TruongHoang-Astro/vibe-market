@@ -60,12 +60,12 @@ function mapRow(r: any) {
 }
 
 const fallbackLogo = (name: string) =>
-  `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'Shop')}&background=990000&color=fff&bold=true`;
+  `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'Shop')}&background=ef4444&color=fff&bold=true`;
 
 function GateView({ title, desc, cta, href }: { title: string; desc: string; cta?: string; href?: string }) {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '40px', textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>
-      <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'linear-gradient(135deg, #990000, #FF0000)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+      <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'linear-gradient(135deg, #ef4444, #f43f5e)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
         <Zap size={32} color="white" fill="white" />
       </div>
       <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', fontWeight: 800, marginBottom: '8px', color: '#111' }}>{title}</h1>
@@ -237,7 +237,7 @@ export default function SellerDashboard() {
       }}>
         <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #990000, #FF0000)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #ef4444, #f43f5e)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Zap size={18} color="white" fill="white" />
             </div>
             <div>
@@ -261,8 +261,8 @@ export default function SellerDashboard() {
           {navItems.map(item => (
             <button key={item.key} onClick={() => { setActiveTab(item.key); setSidebarOpen(false); }}
               className={`sidebar-item ${activeTab === item.key ? 'active' : ''}`}
-              style={{ width: '100%', background: activeTab === item.key ? 'rgba(153,0,0,0.2)' : 'transparent', border: 'none', marginBottom: '2px', justifyContent: 'flex-start' }}>
-              <span style={{ color: activeTab === item.key ? '#ff6666' : 'rgba(255,255,255,0.5)' }}>{item.icon}</span>
+              style={{ width: '100%', background: activeTab === item.key ? 'rgba(239,68,68,0.2)' : 'transparent', border: 'none', marginBottom: '2px', justifyContent: 'flex-start' }}>
+              <span style={{ color: activeTab === item.key ? '#fca5a5' : 'rgba(255,255,255,0.5)' }}>{item.icon}</span>
               <span style={{ color: activeTab === item.key ? 'white' : 'rgba(255,255,255,0.6)', fontSize: '14px' }}>{item.label}</span>
             </button>
           ))}
@@ -291,13 +291,13 @@ export default function SellerDashboard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {activeTab === 'products' && (
               <motion.button whileHover={{ scale: 1.03 }} onClick={openAdd}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 18px', background: 'linear-gradient(135deg, #990000, #cc0000)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 18px', background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}>
                 <Plus size={16} /> Đăng sản phẩm mới
               </motion.button>
             )}
             <button style={{ position: 'relative', background: '#f3f4f6', border: 'none', borderRadius: '10px', padding: '9px', cursor: 'pointer', color: '#374151' }}>
               <Bell size={18} />
-              <span style={{ position: 'absolute', top: '6px', right: '6px', width: '8px', height: '8px', background: '#990000', borderRadius: '50%', border: '2px solid white' }} />
+              <span style={{ position: 'absolute', top: '6px', right: '6px', width: '8px', height: '8px', background: '#ef4444', borderRadius: '50%', border: '2px solid white' }} />
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <img src={logoSrc} alt="Avatar" style={{ width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover' }} />
@@ -313,7 +313,7 @@ export default function SellerDashboard() {
             <div>
               <div className="dash-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
                 {[
-                  { label: 'Doanh thu', val: formatPrice(stats.totalRevenue), icon: <DollarSign size={20} />, change: 'thực', up: true, color: '#990000' },
+                  { label: 'Doanh thu', val: formatPrice(stats.totalRevenue), icon: <DollarSign size={20} />, change: 'thực', up: true, color: '#ef4444' },
                   { label: 'Đơn hàng', val: stats.totalOrders, icon: <ShoppingBag size={20} />, change: 'thực', up: true, color: '#2563eb' },
                   { label: 'Sản phẩm', val: sellerProducts.length, icon: <Package size={20} />, change: 'thực', up: true, color: '#16a34a' },
                   { label: 'Lượt xem (demo)', val: '24.8K', icon: <Eye size={20} />, change: '-3.1%', up: false, color: '#f59e0b' },
@@ -347,7 +347,7 @@ export default function SellerDashboard() {
                       <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={v => `${(v / 1000000).toFixed(0)}M`} />
                       <Tooltip formatter={(val) => formatPrice(Number(val))} labelStyle={{ fontWeight: 600 }} contentStyle={{ borderRadius: '10px', border: '1px solid #e5e7eb', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
-                      <Line type="monotone" dataKey="revenue" stroke="#990000" strokeWidth={2.5} dot={{ fill: '#990000', r: 4 }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="revenue" stroke="#ef4444" strokeWidth={2.5} dot={{ fill: '#ef4444', r: 4 }} activeDot={{ r: 6 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </motion.div>
@@ -361,7 +361,7 @@ export default function SellerDashboard() {
                       <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                       <Tooltip contentStyle={{ borderRadius: '10px', border: '1px solid #e5e7eb' }} />
-                      <Bar dataKey="orders" fill="#990000" radius={[6, 6, 0, 0]} />
+                      <Bar dataKey="orders" fill="#ef4444" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </motion.div>
@@ -372,7 +372,7 @@ export default function SellerDashboard() {
                 style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                 <div style={{ padding: '20px 24px', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', fontWeight: 700 }}>Sản phẩm của bạn</h3>
-                  <button onClick={() => setActiveTab('products')} style={{ fontSize: '13px', color: '#990000', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>Quản lý →</button>
+                  <button onClick={() => setActiveTab('products')} style={{ fontSize: '13px', color: '#ef4444', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>Quản lý →</button>
                 </div>
                 {sellerProducts.length === 0 ? (
                   <div style={{ padding: '40px', textAlign: 'center', color: '#9ca3af' }}>
@@ -390,7 +390,7 @@ export default function SellerDashboard() {
                               <span className="line-clamp-1" style={{ fontWeight: 500, fontSize: '13px', maxWidth: '260px' }}>{p.name}</span>
                             </div>
                           </td>
-                          <td style={{ fontWeight: 700, color: '#990000' }}>{formatPrice(p.price)}</td>
+                          <td style={{ fontWeight: 700, color: '#ef4444' }}>{formatPrice(p.price)}</td>
                           <td><span style={{ fontWeight: 600, color: p.stock < 20 ? '#dc2626' : '#16a34a' }}>{p.stock}</span></td>
                           <td style={{ fontWeight: 600 }}>{formatNumber(p.sold)}</td>
                         </tr>
@@ -409,7 +409,7 @@ export default function SellerDashboard() {
                 <div style={{ padding: '20px 24px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ position: 'relative' }}>
                     <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                    <input type="text" placeholder="Tìm sản phẩm..." style={{ padding: '9px 12px 9px 34px', border: '1.5px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', outline: 'none', width: '260px', fontFamily: 'Inter' }} onFocus={e => (e.target.style.borderColor = '#990000')} onBlur={e => (e.target.style.borderColor = '#e5e7eb')} />
+                    <input type="text" placeholder="Tìm sản phẩm..." style={{ padding: '9px 12px 9px 34px', border: '1.5px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', outline: 'none', width: '260px', fontFamily: 'Inter' }} onFocus={e => (e.target.style.borderColor = '#ef4444')} onBlur={e => (e.target.style.borderColor = '#e5e7eb')} />
                   </div>
                   <span style={{ fontSize: '14px', color: '#6b7280' }}>{sellerProducts.length} sản phẩm</span>
                 </div>
@@ -440,7 +440,7 @@ export default function SellerDashboard() {
                           </td>
                           <td style={{ fontSize: '13px' }}>{product.category}</td>
                           <td>
-                            <div style={{ fontWeight: 700, fontSize: '14px', color: '#990000' }}>{formatPrice(product.price)}</div>
+                            <div style={{ fontWeight: 700, fontSize: '14px', color: '#ef4444' }}>{formatPrice(product.price)}</div>
                             {product.originalPrice > product.price && <div style={{ fontSize: '12px', color: '#9ca3af', textDecoration: 'line-through' }}>{formatPrice(product.originalPrice)}</div>}
                           </td>
                           <td><span style={{ fontWeight: 600, color: product.stock < 20 ? '#dc2626' : '#16a34a' }}>{product.stock}</span></td>
@@ -488,7 +488,7 @@ export default function SellerDashboard() {
                     <tbody>
                       {sellerOrders.map((order, i) => (
                         <motion.tr key={order.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.06 }}>
-                          <td style={{ fontWeight: 700, color: '#990000', fontSize: '13px' }}>{order.id}</td>
+                          <td style={{ fontWeight: 700, color: '#ef4444', fontSize: '13px' }}>{order.id}</td>
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <img src={order.items[0]?.image || ''} alt="" style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover' }} />
@@ -547,7 +547,7 @@ export default function SellerDashboard() {
                     <XAxis dataKey="month" tick={{ fontSize: 13, fill: '#6b7280' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 13, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={v => `${(v / 1000000).toFixed(0)}M`} />
                     <Tooltip formatter={(v) => [formatPrice(Number(v)), 'Doanh thu']} contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
-                    <Line type="monotone" dataKey="revenue" stroke="#990000" strokeWidth={3} dot={{ fill: '#990000', r: 5, strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 7 }} />
+                    <Line type="monotone" dataKey="revenue" stroke="#ef4444" strokeWidth={3} dot={{ fill: '#ef4444', r: 5, strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 7 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -566,10 +566,10 @@ export default function SellerDashboard() {
                   </label>
                   <div style={{ position: 'absolute', bottom: '-42px', left: '28px' }}>
                     <div style={{ position: 'relative', width: '92px', height: '92px' }}>
-                      <div style={{ width: '92px', height: '92px', borderRadius: '22px', overflow: 'hidden', border: '4px solid white', background: 'linear-gradient(135deg, #990000, #FF0000)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 16px rgba(0,0,0,0.18)' }}>
+                      <div style={{ width: '92px', height: '92px', borderRadius: '22px', overflow: 'hidden', border: '4px solid white', background: 'linear-gradient(135deg, #ef4444, #f43f5e)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 16px rgba(0,0,0,0.18)' }}>
                         {shopLogo ? <img src={shopLogo} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Store size={38} color="white" />}
                       </div>
-                      <label style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '30px', height: '30px', borderRadius: '50%', background: '#990000', border: '2px solid white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                      <label style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '30px', height: '30px', borderRadius: '50%', background: '#ef4444', border: '2px solid white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
                         <Camera size={14} />
                         <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => uploadShopImage(e, 'logo')} />
                       </label>

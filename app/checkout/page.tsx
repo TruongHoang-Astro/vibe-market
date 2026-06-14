@@ -224,7 +224,7 @@ export default function CheckoutPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {shippingMethods.map(method => (
                         <motion.div key={method.id} whileHover={{ scale: 1.01 }} onClick={() => setShippingMethod(method.id)}
-                          style={{ padding: '18px 20px', border: `2px solid ${shippingMethod === method.id ? 'var(--primary)' : 'var(--gray-200)'}`, borderRadius: 'var(--radius)', cursor: 'pointer', background: shippingMethod === method.id ? 'rgba(153,0,0,0.03)' : 'white', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          style={{ padding: '18px 20px', border: `2px solid ${shippingMethod === method.id ? 'var(--primary)' : 'var(--gray-200)'}`, borderRadius: 'var(--radius)', cursor: 'pointer', background: shippingMethod === method.id ? 'rgba(239,68,68,0.03)' : 'white', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                             <span style={{ fontSize: '24px' }}>{method.icon}</span>
                             <div>
@@ -267,7 +267,7 @@ export default function CheckoutPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
                       {paymentMethods.map(method => (
                         <div key={method.id} onClick={() => setPaymentMethod(method.id)}
-                          style={{ padding: '16px 18px', border: `2px solid ${paymentMethod === method.id ? 'var(--primary)' : 'var(--gray-200)'}`, borderRadius: 'var(--radius)', cursor: 'pointer', background: paymentMethod === method.id ? 'rgba(153,0,0,0.03)' : 'white', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          style={{ padding: '16px 18px', border: `2px solid ${paymentMethod === method.id ? 'var(--primary)' : 'var(--gray-200)'}`, borderRadius: 'var(--radius)', cursor: 'pointer', background: paymentMethod === method.id ? 'rgba(239,68,68,0.03)' : 'white', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                             <span style={{ color: paymentMethod === method.id ? 'var(--primary)' : 'var(--gray-500)' }}>{method.icon}</span>
                             <div>

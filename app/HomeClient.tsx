@@ -16,24 +16,24 @@ const heroSlides = [
     title: 'Mua Sắm Đỉnh Cao,\nSống Đời Vibe',
     subtitle: 'Hàng nghìn sản phẩm chính hãng, giá tốt nhất thị trường',
     cta: 'Khám phá ngay',
-    bg: 'linear-gradient(135deg, #0a0a0a 0%, #1a0000 50%, #0a0a0a 100%)',
-    accent: '#990000',
+    bg: 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 55%, #fff5f5 100%)',
+    accent: '#ef4444',
     image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&h=700&fit=crop',
   },
   {
     title: 'Flash Sale Mỗi Ngày\nGiảm Đến 70%',
     subtitle: 'Nhanh tay săn deal hot, số lượng có hạn!',
     cta: 'Săn deal ngay',
-    bg: 'linear-gradient(135deg, #000 0%, #330000 50%, #000 100%)',
-    accent: '#FF0000',
+    bg: 'linear-gradient(135deg, #fff7ed 0%, #ffe4e6 55%, #fff1f2 100%)',
+    accent: '#f43f5e',
     image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=700&fit=crop',
   },
   {
     title: 'Mở Shop Ngay\nKiếm Thu Nhập Triệu',
     subtitle: 'Đăng ký miễn phí, bắt đầu bán hàng trong 5 phút',
     cta: 'Bắt đầu bán',
-    bg: 'linear-gradient(135deg, #0a0000 0%, #1f0000 50%, #0a0000 100%)',
-    accent: '#cc4400',
+    bg: 'linear-gradient(135deg, #fffbeb 0%, #ffe4e6 55%, #fff7ed 100%)',
+    accent: '#e0590b',
     image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=700&fit=crop',
   },
 ];
@@ -68,10 +68,10 @@ function HeroBanner() {
           <div className="badge badge-red" style={{ marginBottom: '20px', display: 'inline-flex' }}>
             <Zap size={10} /> Nền tảng #1 Việt Nam
           </div>
-          <h1 style={{ fontFamily: 'Playfair Display', fontSize: 'clamp(2rem, 4vw, 3.5rem)', fontWeight: 800, color: 'white', lineHeight: 1.15, marginBottom: '20px', whiteSpace: 'pre-line' }}>
+          <h1 style={{ fontFamily: 'Playfair Display', fontSize: 'clamp(2rem, 4vw, 3.5rem)', fontWeight: 800, color: 'var(--black)', lineHeight: 1.15, marginBottom: '20px', whiteSpace: 'pre-line' }}>
             {slide.title}
           </h1>
-          <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.7)', marginBottom: '36px', lineHeight: 1.7, maxWidth: '420px' }}>
+          <p style={{ fontSize: '17px', color: 'var(--gray-600)', marginBottom: '36px', lineHeight: 1.7, maxWidth: '420px' }}>
             {slide.subtitle}
           </p>
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
@@ -93,7 +93,7 @@ function HeroBanner() {
             {[{ v: '2M+', l: 'Khách hàng' }, { v: '50K+', l: 'Sản phẩm' }, { v: '10K+', l: 'Shop' }].map(s => (
               <div key={s.l}>
                 <div style={{ fontFamily: 'Playfair Display', fontSize: '26px', fontWeight: 800, color: slide.accent }}>{s.v}</div>
-                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>{s.l}</div>
+                <div style={{ fontSize: '13px', color: 'var(--gray-500)' }}>{s.l}</div>
               </div>
             ))}
           </div>
@@ -133,14 +133,14 @@ function HeroBanner() {
       {/* Slide indicators */}
       <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px' }}>
         {heroSlides.map((_, i) => (
-          <button key={i} onClick={() => goTo(i)} style={{ width: i === current ? '28px' : '8px', height: '8px', borderRadius: '99px', background: i === current ? slide.accent : 'rgba(255,255,255,0.3)', border: 'none', cursor: 'pointer', transition: 'all 0.3s', padding: 0 }} />
+          <button key={i} onClick={() => goTo(i)} style={{ width: i === current ? '28px' : '8px', height: '8px', borderRadius: '99px', background: i === current ? slide.accent : 'rgba(0,0,0,0.15)', border: 'none', cursor: 'pointer', transition: 'all 0.3s', padding: 0 }} />
         ))}
       </div>
       {/* Nav arrows */}
-      <button onClick={() => goTo((current - 1 + heroSlides.length) % heroSlides.length)} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+      <button onClick={() => goTo((current - 1 + heroSlides.length) % heroSlides.length)} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.8)', border: '1px solid var(--gray-200)', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', color: 'var(--gray-700)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', boxShadow: 'var(--shadow-sm)' }}>
         <ChevronLeft size={20} />
       </button>
-      <button onClick={() => goTo((current + 1) % heroSlides.length)} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+      <button onClick={() => goTo((current + 1) % heroSlides.length)} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.8)', border: '1px solid var(--gray-200)', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', color: 'var(--gray-700)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', boxShadow: 'var(--shadow-sm)' }}>
         <ChevronRight size={20} />
       </button>
     </section>
@@ -170,15 +170,15 @@ function FlashSaleSection({ flashSaleProducts }: { flashSaleProducts: Product[] 
   const { addItem, openCart } = useCartStore();
 
   return (
-    <section className="section-sm" style={{ background: 'linear-gradient(135deg, #0a0a0a, #1a0000)' }} ref={ref}>
+    <section className="section-sm" style={{ background: 'linear-gradient(135deg, #fff1f2 0%, #fff5f5 100%)' }} ref={ref}>
       <div className="container">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.5 }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Flame size={28} style={{ color: '#FF4500' }} />
-                <h2 style={{ fontFamily: 'Playfair Display', fontSize: '28px', fontWeight: 800, color: 'white' }}>Flash Sale</h2>
+                <Flame size={28} style={{ color: '#f97316' }} />
+                <h2 style={{ fontFamily: 'Playfair Display', fontSize: '28px', fontWeight: 800, color: 'var(--black)' }}>Flash Sale</h2>
               </div>
               <div style={{ display: 'flex', gap: '6px' }}>
                 {[String(time.h).padStart(2, '0'), String(time.m).padStart(2, '0'), String(time.s).padStart(2, '0')].map((val, i) => (
@@ -199,9 +199,9 @@ function FlashSaleSection({ flashSaleProducts }: { flashSaleProducts: Product[] 
             {flashSaleProducts.slice(0, 5).map((product, i) => (
               <motion.div key={product.id} initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ delay: i * 0.08, duration: 0.5 }}>
                 <Link href={`/products/${product.id}`} style={{ textDecoration: 'none' }}>
-                  <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', transition: 'all 0.3s', cursor: 'pointer' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLElement).style.border = '1px solid rgba(153,0,0,0.4)'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.border = '1px solid rgba(255,255,255,0.08)'; }}
+                  <div style={{ background: 'white', border: '1px solid var(--gray-100)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', transition: 'all 0.3s', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-lg)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-sm)'; }}
                   >
                     <div style={{ position: 'relative', aspectRatio: '1', overflow: 'hidden' }}>
                       <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s' }}
@@ -218,20 +218,20 @@ function FlashSaleSection({ flashSaleProducts }: { flashSaleProducts: Product[] 
                             <span style={{ color: '#FF4500' }}>🔥 Hot</span>
                           </div>
                           <div style={{ height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '99px' }}>
-                            <div style={{ height: '100%', background: 'linear-gradient(90deg, #FF4500, #FF0000)', borderRadius: '99px', width: `${Math.min(80, 30 + (product.sold % 50))}%` }} />
+                            <div style={{ height: '100%', background: 'linear-gradient(90deg, #FF4500, #f43f5e)', borderRadius: '99px', width: `${Math.min(80, 30 + (product.sold % 50))}%` }} />
                           </div>
                         </div>
                       </div>
                     </div>
                     <div style={{ padding: '12px' }}>
-                      <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginBottom: '8px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      <p style={{ fontSize: '13px', color: 'var(--gray-800)', marginBottom: '8px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                         {product.name}
                       </p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <span style={{ color: 'var(--secondary)', fontWeight: 800, fontSize: '16px' }}>
                           {formatPrice(product.flashSalePrice || product.price)}
                         </span>
-                        <span style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'line-through', fontSize: '12px' }}>
+                        <span style={{ color: 'var(--gray-400)', textDecoration: 'line-through', fontSize: '12px' }}>
                           {formatPrice(product.originalPrice)}
                         </span>
                       </div>
@@ -392,17 +392,17 @@ function SellerCTA() {
       <div className="container">
         <motion.div initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.6 }}
           className="seller-grid"
-          style={{ borderRadius: 'var(--radius-xl)', background: 'linear-gradient(135deg, #0a0a0a 0%, #1a0000 60%, #0a0a0a 100%)', padding: 'clamp(40px, 6vw, 80px)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+          style={{ borderRadius: 'var(--radius-xl)', background: 'linear-gradient(135deg, #fff5f5 0%, #ffe4e6 100%)', border: '1px solid var(--gray-100)', padding: 'clamp(40px, 6vw, 80px)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
           {/* BG decoration */}
-          <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(153,0,0,0.15)', filter: 'blur(60px)' }} />
-          <div style={{ position: 'absolute', bottom: '-60px', left: '30%', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(255,0,0,0.1)', filter: 'blur(40px)' }} />
+          <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(239,68,68,0.15)', filter: 'blur(60px)' }} />
+          <div style={{ position: 'absolute', bottom: '-60px', left: '30%', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(244,63,94,0.1)', filter: 'blur(40px)' }} />
 
           <div style={{ position: 'relative' }}>
             <div className="badge badge-red" style={{ marginBottom: '20px', display: 'inline-flex' }}><Store size={10} /> Dành Cho Người Bán</div>
-            <h2 style={{ fontFamily: 'Playfair Display', fontSize: 'clamp(1.8rem, 3vw, 2.8rem)', fontWeight: 800, color: 'white', marginBottom: '16px', lineHeight: 1.2 }}>
+            <h2 style={{ fontFamily: 'Playfair Display', fontSize: 'clamp(1.8rem, 3vw, 2.8rem)', fontWeight: 800, color: 'var(--black)', marginBottom: '16px', lineHeight: 1.2 }}>
               Bắt Đầu Bán Hàng<br />Kiếm Thu Nhập Triệu
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '16px', lineHeight: 1.7, marginBottom: '36px' }}>
+            <p style={{ color: 'var(--gray-600)', fontSize: '16px', lineHeight: 1.7, marginBottom: '36px' }}>
               Đăng ký gian hàng miễn phí, tiếp cận hàng triệu khách hàng, công cụ quản lý bán hàng thông minh.
             </p>
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
@@ -413,7 +413,7 @@ function SellerCTA() {
                 </motion.button>
               </Link>
               <Link href="/seller/dashboard">
-                <motion.button whileHover={{ scale: 1.04 }} className="btn-white" style={{ borderRadius: '99px', fontSize: '16px', background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>
+                <motion.button whileHover={{ scale: 1.04 }} className="btn-outline" style={{ borderRadius: '99px', fontSize: '16px', background: 'white' }}>
                   <span>Xem Dashboard</span>
                 </motion.button>
               </Link>
@@ -427,10 +427,10 @@ function SellerCTA() {
               { icon: <Award size={24} />, val: '99%', label: 'Hài lòng người bán' },
             ].map((s, i) => (
               <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} animate={inView ? { opacity: 1, scale: 1 } : {}} transition={{ delay: 0.2 + i * 0.1 }}
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--radius-lg)', padding: '24px', backdropFilter: 'blur(8px)' }}>
+                style={{ background: 'white', border: '1px solid var(--gray-100)', borderRadius: 'var(--radius-lg)', padding: '24px', boxShadow: 'var(--shadow-sm)' }}>
                 <div style={{ color: 'var(--primary)', marginBottom: '12px' }}>{s.icon}</div>
-                <div style={{ fontFamily: 'Playfair Display', fontSize: '28px', fontWeight: 800, color: 'white', marginBottom: '4px' }}>{s.val}</div>
-                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>{s.label}</div>
+                <div style={{ fontFamily: 'Playfair Display', fontSize: '28px', fontWeight: 800, color: 'var(--black)', marginBottom: '4px' }}>{s.val}</div>
+                <div style={{ fontSize: '13px', color: 'var(--gray-500)' }}>{s.label}</div>
               </motion.div>
             ))}
           </div>

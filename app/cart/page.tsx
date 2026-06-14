@@ -96,7 +96,7 @@ export default function CartPage() {
                       </Link>
                       <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                         onClick={() => openChat(shopId, group.shopName, shopData?.logo || '')}
-                        style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 12px', background: 'white', border: '1.5px solid rgba(153,0,0,0.3)', borderRadius: '99px', color: 'var(--primary)', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>
+                        style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 12px', background: 'white', border: '1.5px solid rgba(239,68,68,0.3)', borderRadius: '99px', color: 'var(--primary)', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>
                         <MessageCircle size={13} /> Chat shop
                       </motion.button>
                     </div>

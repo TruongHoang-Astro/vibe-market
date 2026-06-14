@@ -65,9 +65,9 @@ export default function ShopClient({ shop, shopProducts }: { shop: Shop; shopPro
                   )}
                 </motion.button>
                 <motion.button whileHover={{ scale: 1.03 }} onClick={handleChat}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', border: '2px solid var(--primary)', borderRadius: '10px', background: 'rgba(153,0,0,0.04)', cursor: 'pointer', fontSize: '14px', fontWeight: 700, color: 'var(--primary)', transition: 'all 0.2s' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', border: '2px solid var(--primary)', borderRadius: '10px', background: 'rgba(239,68,68,0.04)', cursor: 'pointer', fontSize: '14px', fontWeight: 700, color: 'var(--primary)', transition: 'all 0.2s' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--primary)'; (e.currentTarget as HTMLButtonElement).style.color = 'white'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(153,0,0,0.04)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--primary)'; }}>
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.04)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--primary)'; }}>
                   <MessageSquare size={16} /> Chat ngay
                 </motion.button>
                 <button style={{ padding: '10px 14px', border: '2px solid var(--gray-200)', borderRadius: '10px', background: 'white', cursor: 'pointer', color: 'var(--gray-500)', transition: 'all 0.2s' }}>
