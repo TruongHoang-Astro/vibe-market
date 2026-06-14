@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, TrendingUp, Settings,
   Bell, Plus, Edit3, Trash2, Eye, Search,
   Upload, X, Check, Star, Zap, LogOut, LogIn,
-  ArrowUpRight, ArrowDownRight, DollarSign, Tag, MessageCircle, User,
+  ArrowUpRight, ArrowDownRight, DollarSign, Tag, MessageCircle, User, Store, Camera,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -96,6 +96,8 @@ export default function SellerDashboard() {
   const [sellerProducts, setSellerProducts] = useState<ReturnType<typeof mapRow>[]>([]);
   const [loadingShop, setLoadingShop] = useState(true);
   const [shopForm, setShopForm] = useState({ name: '', description: '', category: '' });
+  const [shopLogo, setShopLogo] = useState('');
+  const [shopBanner, setShopBanner] = useState('');
   const [savingShop, setSavingShop] = useState(false);
   const [sellerOrders, setSellerOrders] = useState<SellerOrder[]>([]);
   const [stats, setStats] = useState<SellerStats>({ totalRevenue: 0, totalOrders: 0, monthly: [] });
@@ -107,6 +109,8 @@ export default function SellerDashboard() {
     setShop(myShop);
     if (myShop) {
       setShopForm({ name: myShop.name ?? '', description: myShop.description ?? '', category: myShop.category ?? '' });
+      setShopLogo(myShop.logo ?? '');
+      setShopBanner(myShop.banner ?? '');
       const { data: prods } = await supabase.from('products').select('*').eq('shop_id', myShop.id).order('created_at', { ascending: false });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setSellerProducts(((prods ?? []) as any[]).map(mapRow));
@@ -177,9 +181,25 @@ export default function SellerDashboard() {
     loadData();
   };
 
+  const uploadShopImage = (e: React.ChangeEvent<HTMLInputElement>, kind: 'logo' | 'banner') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async ev => {
+      const dataUrl = ev.target?.result as string;
+      if (kind === 'logo') setShopLogo(dataUrl); else setShopBanner(dataUrl); // preview tạm
+      const { url, error } = await uploadChatMedia(dataUrl);
+      if (error || !url) { toast.error('Upload ảnh thất bại'); return; }
+      if (kind === 'logo') setShopLogo(url); else setShopBanner(url);
+      toast.success('Đã tải ảnh lên — nhớ bấm Lưu');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
   const handleSaveShop = async () => {
     setSavingShop(true);
-    const res = await updateShop({ name: shopForm.name, description: shopForm.description, category: shopForm.category });
+    const res = await updateShop({ name: shopForm.name, description: shopForm.description, category: shopForm.category, logo: shopLogo, banner: shopBanner });
     setSavingShop(false);
     if (res.error) { toast.error(res.error); return; }
     toast.success('Đã lưu thông tin gian hàng');
@@ -526,17 +546,36 @@ export default function SellerDashboard() {
 
           {/* ── SETTINGS (thật) ── */}
           {activeTab === 'settings' && (
-            <div style={{ maxWidth: '640px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ background: 'white', borderRadius: '14px', padding: '28px', border: '1px solid #e5e7eb' }}>
-                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '20px', fontWeight: 700, marginBottom: '20px' }}>Thông tin gian hàng</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ maxWidth: '720px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                {/* Ảnh bìa + logo */}
+                <div style={{ position: 'relative', height: '170px', background: shopBanner ? `center / cover no-repeat url(${shopBanner})` : 'linear-gradient(135deg, #0a0a0a, #1a0000)' }}>
+                  <label style={{ position: 'absolute', top: '14px', right: '14px', display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: 'rgba(0,0,0,0.55)', color: 'white', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+                    <Camera size={15} /> Đổi ảnh bìa
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => uploadShopImage(e, 'banner')} />
+                  </label>
+                  <div style={{ position: 'absolute', bottom: '-42px', left: '28px' }}>
+                    <div style={{ position: 'relative', width: '92px', height: '92px' }}>
+                      <div style={{ width: '92px', height: '92px', borderRadius: '22px', overflow: 'hidden', border: '4px solid white', background: 'linear-gradient(135deg, #990000, #FF0000)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 16px rgba(0,0,0,0.18)' }}>
+                        {shopLogo ? <img src={shopLogo} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Store size={38} color="white" />}
+                      </div>
+                      <label style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '30px', height: '30px', borderRadius: '50%', background: '#990000', border: '2px solid white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <Camera size={14} />
+                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => uploadShopImage(e, 'logo')} />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ padding: '58px 28px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '20px', fontWeight: 700 }}>Thông tin gian hàng</h3>
                   <div>
                     <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Tên gian hàng</label>
                     <input type="text" value={shopForm.name} onChange={e => setShopForm({ ...shopForm, name: e.target.value })} className="input-base" />
                   </div>
                   <div>
                     <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Mô tả</label>
-                    <textarea value={shopForm.description} onChange={e => setShopForm({ ...shopForm, description: e.target.value })} style={{ width: '100%', padding: '12px 16px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', fontFamily: 'Inter', resize: 'vertical', minHeight: '80px', outline: 'none' }} />
+                    <textarea value={shopForm.description} onChange={e => setShopForm({ ...shopForm, description: e.target.value })} placeholder="Giới thiệu gian hàng của bạn..." style={{ width: '100%', padding: '12px 16px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', fontFamily: 'Inter', resize: 'vertical', minHeight: '90px', outline: 'none' }} />
                   </div>
                   <div>
                     <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Danh mục chính</label>

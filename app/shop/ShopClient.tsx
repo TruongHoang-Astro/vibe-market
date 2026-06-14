@@ -19,8 +19,8 @@ export default function ShopClient({ shop, shopProducts }: { shop: Shop; shopPro
   return (
     <div style={{ minHeight: '80vh' }}>
       {/* Shop banner */}
-      <div style={{ position: 'relative', height: '220px', overflow: 'hidden' }}>
-        <img src={shop.banner} alt={shop.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div style={{ position: 'relative', height: '220px', overflow: 'hidden', background: 'linear-gradient(135deg, #0a0a0a, #1a0000)' }}>
+        {shop.banner && <img src={shop.banner} alt={shop.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)' }} />
       </div>
 
@@ -29,8 +29,8 @@ export default function ShopClient({ shop, shopProducts }: { shop: Shop; shopPro
         <div className="container" style={{ padding: '0 24px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '24px', transform: 'translateY(-40px)', marginBottom: '-20px', flexWrap: 'wrap' }}>
             {/* Logo */}
-            <div style={{ width: '100px', height: '100px', borderRadius: '20px', overflow: 'hidden', border: '4px solid white', boxShadow: 'var(--shadow-md)', flexShrink: 0 }}>
-              <img src={shop.logo} alt={shop.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{ width: '100px', height: '100px', borderRadius: '20px', overflow: 'hidden', border: '4px solid white', boxShadow: 'var(--shadow-md)', flexShrink: 0, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {shop.logo ? <img src={shop.logo} alt={shop.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Store size={44} color="white" />}
             </div>
             <div style={{ flex: 1, paddingBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
