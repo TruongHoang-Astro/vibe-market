@@ -6,22 +6,25 @@ import {
   LayoutDashboard, Package, ShoppingBag, TrendingUp, Settings,
   Bell, Plus, Edit3, Trash2, Eye, Search,
   Upload, X, Check, Star, Zap, LogOut, LogIn,
-  ArrowUpRight, ArrowDownRight, DollarSign, Tag,
+  ArrowUpRight, ArrowDownRight, DollarSign, Tag, MessageCircle, User,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar,
 } from 'recharts';
-import { orders, revenueData, formatPrice, formatNumber } from '@/lib/data/mock-data';
+import { formatPrice, formatNumber } from '@/lib/data/mock-data';
 import { useUser } from '@/lib/supabase/use-user';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
-import { createProduct, updateProduct, deleteProduct, updateShop } from '@/app/actions/seller';
+import { createProduct, updateProduct, deleteProduct, updateShop, getShopOrders } from '@/app/actions/seller';
+import type { SellerOrder, SellerStats } from '@/app/actions/seller';
 import { uploadChatMedia } from '@/app/actions/chat';
+import SellerChat from './SellerChat';
 
 const navItems = [
   { key: 'dashboard', label: 'Tổng quan', icon: <LayoutDashboard size={18} /> },
   { key: 'products', label: 'Sản phẩm', icon: <Package size={18} /> },
+  { key: 'chat', label: 'Tin nhắn', icon: <MessageCircle size={18} /> },
   { key: 'orders', label: 'Đơn hàng', icon: <ShoppingBag size={18} /> },
   { key: 'revenue', label: 'Doanh thu', icon: <TrendingUp size={18} /> },
   { key: 'settings', label: 'Cài đặt', icon: <Settings size={18} /> },
@@ -85,6 +88,8 @@ export default function SellerDashboard() {
   const [loadingShop, setLoadingShop] = useState(true);
   const [shopForm, setShopForm] = useState({ name: '', description: '', category: '' });
   const [savingShop, setSavingShop] = useState(false);
+  const [sellerOrders, setSellerOrders] = useState<SellerOrder[]>([]);
+  const [stats, setStats] = useState<SellerStats>({ totalRevenue: 0, totalOrders: 0, monthly: [] });
 
   const loadData = async () => {
     if (!user) { setLoadingShop(false); return; }
@@ -96,16 +101,14 @@ export default function SellerDashboard() {
       const { data: prods } = await supabase.from('products').select('*').eq('shop_id', myShop.id).order('created_at', { ascending: false });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setSellerProducts(((prods ?? []) as any[]).map(mapRow));
+      const { orders: so, stats: st } = await getShopOrders();
+      setSellerOrders(so);
+      setStats(st);
     }
     setLoadingShop(false);
   };
 
   useEffect(() => { loadData(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user]);
-
-  // Demo cho tab Đơn hàng / Doanh thu (nối dữ liệu thật ở bước sau)
-  const sellerOrders = orders;
-  const totalRevenue = revenueData.reduce((s, m) => s + m.revenue, 0);
-  const totalOrders = orders.length;
 
   const resetForm = () => {
     setProductForm({ name: '', category: '', price: '', salePrice: '', stock: '', description: '' });
@@ -264,9 +267,9 @@ export default function SellerDashboard() {
             <div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
                 {[
-                  { label: 'Doanh thu (demo)', val: formatPrice(totalRevenue), icon: <DollarSign size={20} />, change: '+18.2%', up: true, color: '#990000' },
-                  { label: 'Đơn hàng (demo)', val: totalOrders, icon: <ShoppingBag size={20} />, change: '+12.5%', up: true, color: '#2563eb' },
-                  { label: 'Sản phẩm', val: sellerProducts.length, icon: <Package size={20} />, change: 'thực tế', up: true, color: '#16a34a' },
+                  { label: 'Doanh thu', val: formatPrice(stats.totalRevenue), icon: <DollarSign size={20} />, change: 'thực', up: true, color: '#990000' },
+                  { label: 'Đơn hàng', val: stats.totalOrders, icon: <ShoppingBag size={20} />, change: 'thực', up: true, color: '#2563eb' },
+                  { label: 'Sản phẩm', val: sellerProducts.length, icon: <Package size={20} />, change: 'thực', up: true, color: '#16a34a' },
                   { label: 'Lượt xem (demo)', val: '24.8K', icon: <Eye size={20} />, change: '-3.1%', up: false, color: '#f59e0b' },
                 ].map((stat, i) => (
                   <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
@@ -290,10 +293,10 @@ export default function SellerDashboard() {
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                   style={{ background: 'white', borderRadius: '14px', padding: '24px', border: '1px solid #e5e7eb' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                    <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', fontWeight: 700 }}>Doanh thu 6 tháng <span style={{ fontSize: '12px', color: '#9ca3af', fontWeight: 400 }}>(demo)</span></h3>
+                    <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', fontWeight: 700 }}>Doanh thu 6 tháng</h3>
                   </div>
                   <ResponsiveContainer width="100%" height={220}>
-                    <LineChart data={revenueData}>
+                    <LineChart data={stats.monthly}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={v => `${(v / 1000000).toFixed(0)}M`} />
@@ -305,9 +308,9 @@ export default function SellerDashboard() {
 
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
                   style={{ background: 'white', borderRadius: '14px', padding: '24px', border: '1px solid #e5e7eb' }}>
-                  <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', fontWeight: 700, marginBottom: '20px' }}>Đơn hàng <span style={{ fontSize: '12px', color: '#9ca3af', fontWeight: 400 }}>(demo)</span></h3>
+                  <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', fontWeight: 700, marginBottom: '20px' }}>Đơn hàng</h3>
                   <ResponsiveContainer width="100%" height={220}>
-                    <BarChart data={revenueData}>
+                    <BarChart data={stats.monthly}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                       <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
@@ -420,52 +423,71 @@ export default function SellerDashboard() {
             </div>
           )}
 
-          {/* ── ORDERS (demo) ── */}
+          {/* ── CHAT 2 chiều (realtime) ── */}
+          {activeTab === 'chat' && <SellerChat shopId={shop.id} />}
+
+          {/* ── ORDERS (thật — đơn chứa sản phẩm của shop) ── */}
           {activeTab === 'orders' && (
             <div>
-              <div style={{ marginBottom: '16px', padding: '10px 16px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', fontSize: '13px', color: '#a16207' }}>
-                ⓘ Dữ liệu đơn hàng dưới đây là demo — sẽ nối với đơn thật của shop ở bước tiếp theo.
-              </div>
               <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-                <table className="table-base">
-                  <thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Khách hàng</th><th>Tổng tiền</th><th>Thanh toán</th><th>Trạng thái</th><th>Ngày</th></tr></thead>
-                  <tbody>
-                    {sellerOrders.map((order, i) => (
-                      <motion.tr key={order.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.06 }}>
-                        <td style={{ fontWeight: 700, color: '#990000', fontSize: '13px' }}>{order.id}</td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <img src={order.products[0].image} alt="" style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover' }} />
-                            <span className="line-clamp-1" style={{ fontSize: '13px', maxWidth: '160px' }}>{order.products[0].name}</span>
-                          </div>
-                        </td>
-                        <td style={{ fontSize: '13px' }}>{order.address.split(',')[0]}</td>
-                        <td style={{ fontWeight: 700 }}>{formatPrice(order.total)}</td>
-                        <td style={{ fontSize: '13px' }}>{order.paymentMethod}</td>
-                        <td>
-                          <span style={{ background: statusColors[order.status].bg, color: statusColors[order.status].color, padding: '4px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: 600 }}>
-                            {statusColors[order.status].label}
-                          </span>
-                        </td>
-                        <td style={{ color: '#6b7280', fontSize: '13px' }}>{new Date(order.date).toLocaleDateString('vi-VN')}</td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
+                {sellerOrders.length === 0 ? (
+                  <div style={{ padding: '60px', textAlign: 'center', color: '#9ca3af' }}>
+                    <ShoppingBag size={48} style={{ marginBottom: '12px', opacity: 0.4 }} />
+                    <p style={{ fontWeight: 600, marginBottom: '6px' }}>Chưa có đơn hàng nào</p>
+                    <p style={{ fontSize: '13px' }}>Đơn hàng có chứa sản phẩm của shop bạn sẽ hiện ở đây.</p>
+                  </div>
+                ) : (
+                  <table className="table-base">
+                    <thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Khách</th><th>Doanh thu</th><th>Thanh toán</th><th>Trạng thái</th><th>Ngày</th></tr></thead>
+                    <tbody>
+                      {sellerOrders.map((order, i) => (
+                        <motion.tr key={order.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.06 }}>
+                          <td style={{ fontWeight: 700, color: '#990000', fontSize: '13px' }}>{order.id}</td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <img src={order.items[0]?.image || ''} alt="" style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover' }} />
+                              <span className="line-clamp-1" style={{ fontSize: '13px', maxWidth: '160px' }}>
+                                {order.items[0]?.name}{order.items.length > 1 ? ` +${order.items.length - 1}` : ''}
+                              </span>
+                            </div>
+                          </td>
+                          <td style={{ fontSize: '13px' }}>Khách #{order.buyerId.slice(0, 4).toUpperCase()}</td>
+                          <td style={{ fontWeight: 700 }}>{formatPrice(order.shopRevenue)}</td>
+                          <td style={{ fontSize: '13px' }}>{order.paymentMethod}</td>
+                          <td>
+                            <span style={{ background: statusColors[order.status]?.bg, color: statusColors[order.status]?.color, padding: '4px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: 600 }}>
+                              {statusColors[order.status]?.label ?? order.status}
+                            </span>
+                          </td>
+                          <td style={{ color: '#6b7280', fontSize: '13px' }}>{new Date(order.date).toLocaleDateString('vi-VN')}</td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           )}
 
-          {/* ── REVENUE (demo) ── */}
+          {/* ── REVENUE (thật) ── */}
           {activeTab === 'revenue' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ padding: '10px 16px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', fontSize: '13px', color: '#a16207' }}>
-                ⓘ Biểu đồ doanh thu là dữ liệu demo — sẽ tính từ đơn hàng thật ở bước sau.
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                {[
+                  { label: 'Tổng doanh thu', val: formatPrice(stats.totalRevenue) },
+                  { label: 'Tổng đơn hàng', val: String(stats.totalOrders) },
+                  { label: 'Doanh thu / đơn (TB)', val: formatPrice(stats.totalOrders ? Math.round(stats.totalRevenue / stats.totalOrders) : 0) },
+                ].map((s, i) => (
+                  <div key={i} style={{ background: 'white', borderRadius: '14px', padding: '20px', border: '1px solid #e5e7eb' }}>
+                    <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>{s.label}</div>
+                    <div style={{ fontSize: '24px', fontWeight: 800, color: '#111' }}>{s.val}</div>
+                  </div>
+                ))}
               </div>
               <div style={{ background: 'white', borderRadius: '14px', padding: '28px', border: '1px solid #e5e7eb' }}>
                 <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '20px', fontWeight: 700, marginBottom: '24px' }}>Biểu đồ doanh thu 6 tháng</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={revenueData}>
+                  <LineChart data={stats.monthly}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                     <XAxis dataKey="month" tick={{ fontSize: 13, fill: '#6b7280' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 13, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={v => `${(v / 1000000).toFixed(0)}M`} />

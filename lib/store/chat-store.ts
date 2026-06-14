@@ -30,6 +30,7 @@ export interface Conversation {
   lastTime: number;
   unreadCount: number;
   isOnline: boolean;
+  hasOwner?: boolean; // shop có chủ thật → tắt auto-reply mô phỏng
 }
 
 // Waveform seed cho audio bubble (tránh random re-render)
@@ -146,13 +147,17 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       convId = created.id;
     }
 
+    // Shop có chủ thật không? (nếu có → tắt auto-reply, để seller trả lời)
+    const { data: shopRow } = await supa.from('shops').select('owner_id').eq('id', shopId).maybeSingle();
+    const hasOwner = !!shopRow?.owner_id;
+
     set(state => ({
       isOpen: true,
       activeConversationId: convId,
       conversations: {
         ...state.conversations,
         [convId]: {
-          id: convId, shopId, shopName, shopLogo,
+          id: convId, shopId, shopName, shopLogo, hasOwner,
           lastMessage: state.conversations[convId]?.lastMessage ?? '',
           lastTime: state.conversations[convId]?.lastTime ?? Date.now(),
           unreadCount: 0,
@@ -165,8 +170,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     await get().loadMessages(convId);
     get().markAsRead(convId);
 
-    // Lời chào nếu hội thoại chưa có tin nhắn nào
-    if ((get().messages[convId] || []).length === 0) {
+    // Lời chào tự động chỉ cho shop CHƯA có chủ (demo). Shop có chủ → seller tự trả lời.
+    if (!hasOwner && (get().messages[convId] || []).length === 0) {
       void insertMessage(get, set, convId, 'shop', 'text',
         `Xin chào! Đây là ${shopName}. Chúng tôi có thể giúp gì cho bạn? 😊`);
     }
@@ -189,7 +194,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     if (!user) return;
     const { data, error } = await supa
       .from('conversations')
-      .select('id, shop_id, last_message, last_time, unread_count, shops(name, logo)')
+      .select('id, shop_id, last_message, last_time, unread_count, shops(name, logo, owner_id)')
       .order('last_time', { ascending: false });
     if (error) {
       console.error('loadConversations:', error.message);
@@ -207,6 +212,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         lastTime: new Date(c.last_time).getTime(),
         unreadCount: c.unread_count ?? 0,
         isOnline: true,
+        hasOwner: !!c.shops?.owner_id,
       };
     });
     set({ conversations: convs });
@@ -260,7 +266,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
     await insertMessage(get, set, conversationId, 'buyer', type, finalContent, extra);
 
-    // Auto-reply phía shop (lưu DB + đẩy realtime)
+    // Auto-reply mô phỏng CHỈ cho shop chưa có chủ. Shop có chủ → seller tự trả lời.
+    if (get().conversations[conversationId]?.hasOwner) return;
     const delay = 1200 + Math.random() * 1800;
     setTimeout(() => {
       const pool = shopReplies[type];
