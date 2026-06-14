@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Store, Package, ShoppingBag,
   Settings, Zap, LogOut, Bell, Search, ArrowUpRight,
   ArrowDownRight, Shield, CheckCircle2, XCircle, AlertTriangle,
-  Eye, Edit3, Trash2, TrendingUp, DollarSign, Star, MoreHorizontal
+  Eye, Edit3, Trash2, TrendingUp, DollarSign, Star, MoreHorizontal, Menu
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -49,6 +49,7 @@ const mockUsers = [
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [shopFilter, setShopFilter] = useState<'all' | 'pending' | 'active'>('all');
 
   const totalRevenue = orders.reduce((s, o) => s + o.total, 0) * 18; // platform take
@@ -58,8 +59,10 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f1f5f9', fontFamily: 'Inter, sans-serif' }}>
+      {sidebarOpen && <div className="dash-backdrop" onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 55 }} />}
+
       {/* Sidebar */}
-      <aside style={{ width: '240px', background: 'linear-gradient(180deg, #0a0a0a 0%, #1a0000 100%)', flexShrink: 0, display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 30, overflowY: 'auto' }}>
+      <aside className={`dash-sidebar ${sidebarOpen ? 'open' : ''}`} style={{ width: '240px', background: 'linear-gradient(180deg, #0a0a0a 0%, #1a0000 100%)', flexShrink: 0, display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 30, overflowY: 'auto' }}>
         <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #990000, #FF0000)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -86,7 +89,7 @@ export default function AdminDashboard() {
 
         <nav style={{ padding: '12px', flex: 1 }}>
           {navItems.map(item => (
-            <button key={item.key} onClick={() => setActiveTab(item.key)}
+            <button key={item.key} onClick={() => { setActiveTab(item.key); setSidebarOpen(false); }}
               style={{
                 width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px',
                 borderRadius: '8px', border: 'none', cursor: 'pointer', marginBottom: '2px',
@@ -118,14 +121,20 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main */}
-      <main style={{ marginLeft: '240px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <main className="dash-main" style={{ marginLeft: '240px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
-        <header style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 28px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 20 }}>
-          <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>
-            {navItems.find(n => n.key === activeTab)?.label || 'Dashboard'}
-          </h1>
+        <header style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 16px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+            <button className="dash-burger" onClick={() => setSidebarOpen(true)} aria-label="Mở menu"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#0f172a', alignItems: 'center' }}>
+              <Menu size={22} />
+            </button>
+            <h1 className="line-clamp-1" style={{ fontFamily: 'Playfair Display, serif', fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>
+              {navItems.find(n => n.key === activeTab)?.label || 'Dashboard'}
+            </h1>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ position: 'relative' }}>
+            <div className="nav-hide-mobile" style={{ position: 'relative' }}>
               <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
               <input type="text" placeholder="Tìm kiếm..." style={{ padding: '9px 12px 9px 34px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', outline: 'none', width: '220px', fontFamily: 'Inter', background: '#f8fafc' }} onFocus={e => (e.target.style.borderColor = '#990000')} onBlur={e => (e.target.style.borderColor = '#e2e8f0')} />
             </div>
@@ -133,7 +142,7 @@ export default function AdminDashboard() {
               <Bell size={18} />
               <span style={{ position: 'absolute', top: '4px', right: '4px', width: '8px', height: '8px', background: '#990000', borderRadius: '50%', border: '2px solid white' }} />
             </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: '#f8fafc', borderRadius: '10px', border: '1.5px solid #e2e8f0' }}>
+            <div className="nav-hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: '#f8fafc', borderRadius: '10px', border: '1.5px solid #e2e8f0' }}>
               <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #990000, #FF0000)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Shield size={14} color="white" />
               </div>
@@ -142,13 +151,13 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        <div style={{ flex: 1, padding: '28px', overflowY: 'auto' }}>
+        <div className="dash-content" style={{ flex: 1, padding: '28px', overflowY: 'auto' }}>
 
           {/* ── DASHBOARD ── */}
           {activeTab === 'dashboard' && (
             <div>
               {/* KPI Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+              <div className="dash-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
                 {[
                   { label: 'Tổng doanh thu', val: formatPrice(totalRevenue * 100), icon: <DollarSign size={20} />, change: '+24.5%', up: true, color: '#990000', sub: 'Tháng này' },
                   { label: 'Tổng người dùng', val: formatNumber(totalUsers), icon: <Users size={20} />, change: '+8.2%', up: true, color: '#2563eb', sub: `+${formatNumber(1240)} tuần này` },
@@ -174,7 +183,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Charts row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '24px' }}>
+              <div className="dash-charts" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '24px' }}>
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
                   style={{ background: 'white', borderRadius: '14px', padding: '24px', border: '1px solid #e2e8f0' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -223,7 +232,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Recent activity */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div className="dash-charts" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 {/* Latest shops */}
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
                   style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
@@ -284,7 +293,7 @@ export default function AdminDashboard() {
           {/* ── USERS ── */}
           {activeTab === 'users' && (
             <div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '20px' }}>
+              <div className="dash-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '20px' }}>
                 {[
                   { label: 'Tổng người dùng', val: formatNumber(totalUsers), color: '#2563eb', icon: <Users size={18} /> },
                   { label: 'Người bán', val: formatNumber(totalShops), color: '#990000', icon: <Store size={18} /> },
@@ -365,7 +374,7 @@ export default function AdminDashboard() {
                   </button>
                 ))}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+              <div className="dash-3 dash-shops" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
                 {shops.map((shop, i) => (
                   <motion.div key={shop.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
                     style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>

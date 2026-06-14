@@ -424,10 +424,12 @@ h1, h2, h3 {
 }
 
 /* Dashboard (seller/admin) responsive: sidebar → drawer trên mobile */
+.dash-main { min-width: 0; }
 .dash-burger { display: none; }
 .dash-backdrop { display: none; }
 .sc-back { display: none; }
 @media (max-width: 768px) {
+  .nav-hide-mobile { display: none !important; }
   .sc-list { width: 100% !important; }
   .sc-wrap.has-active .sc-list { display: none !important; }
   .sc-wrap:not(.has-active) .sc-thread { display: none !important; }
@@ -442,6 +444,7 @@ h1, h2, h3 {
   .dash-3 { grid-template-columns: minmax(0, 1fr) !important; }
   .dash-content { padding: 16px !important; }
   .dash-table-card { overflow-x: auto !important; }
+  .dash-table-card .table-base { min-width: 560px; }
 }
 
 /* Skeleton loading helpers */
