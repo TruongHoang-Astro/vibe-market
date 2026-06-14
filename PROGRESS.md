@@ -125,6 +125,20 @@
 > - Verified token user thật: review insert+đọc công khai, profile update, avatar
 >   storage upload/read. Build xanh 16 routes.
 >
+> **Seller — Nền tảng + Quản lý shop (xong code, 14/06/2026):**
+> - `supabase/seller.sql` (migration, **người dùng phải chạy**): cập nhật trigger
+>   `handle_new_user` set role từ metadata + tạo shop khi role='seller'; RLS owner
+>   cho shops (insert/update) + products (insert/update/delete); RLS chat 2 chiều
+>   cho conversations/messages (buyer HOẶC chủ shop) — sẵn cho UI chat seller turn sau.
+> - `app/actions/seller.ts`: createProduct/updateProduct/deleteProduct/updateShop
+>   (verify chủ shop, id sản phẩm `p-xxxxxxxx`, giá gốc→original_price, KM→price).
+> - `app/seller/dashboard/page.tsx` rewrite: gate theo role=seller + có shop; đọc
+>   shop & sản phẩm thật; CRUD sản phẩm (modal add/edit, upload ảnh qua uploadChatMedia,
+>   xóa); lưu thông tin shop thật. Tab Đơn hàng/Doanh thu vẫn demo (đánh dấu rõ).
+> - Build xanh, pages render OK. **Chưa verify runtime** vì chờ user chạy seller.sql.
+> - Lưu ý: user đăng ký "seller" TRƯỚC migration vẫn là role=buyer, không có shop —
+>   cần đăng ký lại sau khi chạy migration.
+>
 > ### Bucket Storage
 > `chat-media` (public) đã tạo. Nếu dựng project Supabase mới, cần tạo lại bucket
 > này (Dashboard → Storage → New bucket → tên `chat-media`, bật Public).
@@ -135,7 +149,12 @@
 - [x] Viết đánh giá sản phẩm (form submit ở trang chi tiết, lưu DB)
 - [ ] `/profile/address` — Sổ địa chỉ
 - [ ] `/notifications` — Trung tâm thông báo
-- [ ] **Seller thật** — tài khoản seller + chat 2 chiều + quản lý shop (giai đoạn lớn)
+- [~] **Seller thật** (giai đoạn lớn):
+      - [x] Tài khoản seller + sở hữu shop (trigger tạo shop khi đăng ký seller)
+      - [x] Quản lý shop: CRUD sản phẩm + sửa thông tin gian hàng (dashboard thật)
+      - [ ] Chat 2 chiều (RLS đã sẵn — cần UI chat cho seller) — turn sau
+      - [ ] Dashboard đơn hàng/doanh thu dữ liệu thật — turn sau
+      - ⚠️ **Cần chạy `supabase/seller.sql`** trong Supabase SQL Editor trước
 
 ### 🟡 Ưu tiên 3 — UX & Performance
 - [ ] Skeleton loading (CSS đã có, chưa dùng)
