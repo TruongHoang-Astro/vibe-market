@@ -152,6 +152,19 @@
 > - Verified token thật: seller đọc/trả lời hội thoại khách (chat 2 chiều), cách ly
 >   RLS, getShopOrders trả đúng đơn. Build xanh 16 routes.
 >
+> **Trang phụ + trạng thái đơn (xong, 14/06/2026):**
+> - `supabase/extras.sql`: bảng `addresses` + `notifications` + RLS (all own /
+>   read+update own). Realtime bật cho notifications.
+> - `/profile/address`: CRUD sổ địa chỉ (đặt mặc định bỏ mặc định cũ), link từ /profile.
+> - `/notifications`: list + mark read/all + click→link; Navbar chuông hiện badge
+>   số chưa đọc (count head query).
+> - `seller.ts` `updateOrderStatus`: admin đổi status + chèn notification cho buyer;
+>   dashboard tab Đơn hàng có nút Xác nhận/Giao/Đã giao/Hủy (map nextActions).
+> - `orders.ts` createOrder: best-effort chèn notification cho buyer + chủ shop.
+> - Notifications insert luôn qua admin (service role); user chỉ read/update own.
+> - Verified token thật: address CRUD+cách ly, notif insert/read/mark-read+cách ly,
+>   đổi trạng thái đơn → thông báo khách. Build xanh 18 routes.
+>
 > ### Bucket Storage
 > `chat-media` (public) đã tạo. Nếu dựng project Supabase mới, cần tạo lại bucket
 > này (Dashboard → Storage → New bucket → tên `chat-media`, bật Public).
@@ -160,8 +173,9 @@
 - [x] `/profile` — Trang cá nhân (avatar upload, sửa tên/SĐT, đổi mật khẩu)
 - [x] `/forgot-password` + `/reset-password` — quên/đặt lại mật khẩu (+ `/auth/callback`)
 - [x] Viết đánh giá sản phẩm (form submit ở trang chi tiết, lưu DB)
-- [ ] `/profile/address` — Sổ địa chỉ
-- [ ] `/notifications` — Trung tâm thông báo
+- [x] `/profile/address` — Sổ địa chỉ (CRUD + mặc định, RLS own)
+- [x] `/notifications` — Trung tâm thông báo (mark read, Navbar badge) + sinh thông báo tự động
+- [x] Cập nhật trạng thái đơn (seller bấm Xác nhận/Giao/Đã giao → thông báo khách)
 - [x] **Seller thật** (HOÀN TẤT — cần đã chạy `supabase/seller.sql`):
       - [x] Tài khoản seller + sở hữu shop (trigger tạo shop khi đăng ký seller)
       - [x] Quản lý shop: CRUD sản phẩm + sửa thông tin gian hàng (dashboard thật)
