@@ -139,6 +139,19 @@
 > - Lưu ý: user đăng ký "seller" TRƯỚC migration vẫn là role=buyer, không có shop —
 >   cần đăng ký lại sau khi chạy migration.
 >
+> **Seller — Chat 2 chiều + dashboard thật (xong, 14/06/2026):**
+> - `chat-store.ts`: thêm `hasOwner` cho conversation → shop có chủ TẮT auto-reply
+>   mô phỏng (để seller trả lời thật), shop seed (không chủ) vẫn auto-reply demo.
+> - `app/seller/dashboard/SellerChat.tsx`: UI chat seller (danh sách hội thoại +
+>   khung chat + trả lời text + realtime postgres_changes + hiện ảnh/audio/video).
+>   Khách hiển thị "Khách #xxxx" (RLS profiles không cho seller đọc tên buyer).
+> - `seller.ts` `getShopOrders`: admin client lấy order_items có product của shop +
+>   join orders, gộp theo đơn, tính doanh thu phần shop + thống kê 6 tháng.
+> - Dashboard: tab Tin nhắn, tab Đơn hàng + Doanh thu + overview dùng dữ liệu thật.
+> - Fix bug modal lệch (framer-motion ghi đè transform → bọc flex-center).
+> - Verified token thật: seller đọc/trả lời hội thoại khách (chat 2 chiều), cách ly
+>   RLS, getShopOrders trả đúng đơn. Build xanh 16 routes.
+>
 > ### Bucket Storage
 > `chat-media` (public) đã tạo. Nếu dựng project Supabase mới, cần tạo lại bucket
 > này (Dashboard → Storage → New bucket → tên `chat-media`, bật Public).
@@ -149,12 +162,11 @@
 - [x] Viết đánh giá sản phẩm (form submit ở trang chi tiết, lưu DB)
 - [ ] `/profile/address` — Sổ địa chỉ
 - [ ] `/notifications` — Trung tâm thông báo
-- [~] **Seller thật** (giai đoạn lớn):
+- [x] **Seller thật** (HOÀN TẤT — cần đã chạy `supabase/seller.sql`):
       - [x] Tài khoản seller + sở hữu shop (trigger tạo shop khi đăng ký seller)
       - [x] Quản lý shop: CRUD sản phẩm + sửa thông tin gian hàng (dashboard thật)
-      - [ ] Chat 2 chiều (RLS đã sẵn — cần UI chat cho seller) — turn sau
-      - [ ] Dashboard đơn hàng/doanh thu dữ liệu thật — turn sau
-      - ⚠️ **Cần chạy `supabase/seller.sql`** trong Supabase SQL Editor trước
+      - [x] Chat 2 chiều: seller đọc + trả lời hội thoại khách (realtime)
+      - [x] Dashboard đơn hàng/doanh thu dữ liệu thật (getShopOrders)
 
 ### 🟡 Ưu tiên 3 — UX & Performance
 - [ ] Skeleton loading (CSS đã có, chưa dùng)
