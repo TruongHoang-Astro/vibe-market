@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft, Tag, ChevronRight, Gift, Truck, MessageCircle, Store } from 'lucide-react';
 import { useCartStore } from '@/lib/store/cart-store';
 import { useChatStore } from '@/lib/store/chat-store';
-import { shops, formatPrice } from '@/lib/data/mock-data';
+import { formatPrice } from '@/lib/data/mock-data';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, clearCart, getTotalPrice } = useCartStore();
@@ -85,7 +85,6 @@ export default function CartPage() {
                   return acc;
                 }, {})
               ).map(([shopId, group]) => {
-                const shopData = shops.find(s => s.id === shopId);
                 return (
                   <div key={shopId} style={{ borderBottom: '1px solid var(--gray-100)' }}>
                     {/* Shop header row */}
@@ -95,7 +94,7 @@ export default function CartPage() {
                         {group.shopName}
                       </Link>
                       <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-                        onClick={() => openChat(shopId, group.shopName, shopData?.logo || '')}
+                        onClick={() => openChat(shopId, group.shopName, '')}
                         style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 12px', background: 'white', border: '1.5px solid rgba(239,68,68,0.3)', borderRadius: '99px', color: 'var(--primary)', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>
                         <MessageCircle size={13} /> Chat shop
                       </motion.button>

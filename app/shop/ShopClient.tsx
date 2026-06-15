@@ -1,18 +1,45 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Heart, Store, Package, Users, ChevronRight, ShieldCheck, MessageSquare, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { formatPrice, formatNumber } from '@/lib/data/mock-data';
-import type { Shop, Product } from '@/lib/data/mock-data';
+import type { Shop, Product, Review } from '@/lib/data/mock-data';
 import { useCartStore } from '@/lib/store/cart-store';
 import { useChatStore } from '@/lib/store/chat-store';
+import { useUser } from '@/lib/supabase/use-user';
+import { createClient } from '@/lib/supabase/client';
+import { toggleFollowShop } from '@/app/actions/shop';
 
-export default function ShopClient({ shop, shopProducts }: { shop: Shop; shopProducts: Product[] }) {
+export default function ShopClient({ shop, shopProducts, shopReviews, reviewTotal }: { shop: Shop; shopProducts: Product[]; shopReviews: Review[]; reviewTotal: number }) {
+  const { user } = useUser();
   const [followed, setFollowed] = useState(false);
+  const [followers, setFollowers] = useState(shop.followers);
+  const [followBusy, setFollowBusy] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'reviews' | 'info'>('products');
   const { addItem, openCart } = useCartStore();
   const { openChat } = useChatStore();
+
+  // Trạng thái theo dõi thật của user hiện tại
+  useEffect(() => {
+    if (!user) { setFollowed(false); return; }
+    createClient().from('shop_follows').select('id').eq('user_id', user.id).eq('shop_id', shop.id).maybeSingle()
+      .then(({ data }) => setFollowed(!!data));
+  }, [user, shop.id]);
+
+  const handleFollow = async () => {
+    if (!user) { toast('Đăng nhập để theo dõi shop nhé!'); return; }
+    if (followBusy) return;
+    setFollowBusy(true);
+    const prev = followed;
+    setFollowed(!prev); setFollowers(f => f + (prev ? -1 : 1)); // optimistic
+    const res = await toggleFollowShop(shop.id);
+    setFollowBusy(false);
+    if (res.error) { setFollowed(prev); setFollowers(f => f + (prev ? 1 : -1)); toast.error(res.error); return; }
+    setFollowed(!!res.following);
+    toast.success(res.following ? 'Đã theo dõi shop' : 'Đã bỏ theo dõi');
+  };
 
   const handleChat = () => openChat(shop.id, shop.name, shop.logo);
   const theme = shop.themeColor || 'var(--primary)';
@@ -57,7 +84,7 @@ export default function ShopClient({ shop, shopProducts }: { shop: Shop; shopPro
               <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', marginBottom: '16px' }}>
                 {[
                   { icon: <Star size={14} fill="#f59e0b" color="#f59e0b" />, val: shop.rating, label: 'Đánh giá' },
-                  { icon: <Users size={14} />, val: formatNumber(shop.followers), label: 'Theo dõi' },
+                  { icon: <Users size={14} />, val: formatNumber(followers), label: 'Theo dõi' },
                   { icon: <Package size={14} />, val: shop.products, label: 'Sản phẩm' },
                 ].map((stat, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: 'var(--gray-600)' }}>
@@ -68,7 +95,7 @@ export default function ShopClient({ shop, shopProducts }: { shop: Shop; shopPro
                 ))}
               </div>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <motion.button whileHover={{ scale: 1.04 }} onClick={() => setFollowed(!followed)}
+                <motion.button whileHover={{ scale: 1.04 }} onClick={handleFollow}
                   className={followed ? 'btn-outline' : 'btn-primary'}
                   style={{ borderRadius: '10px', padding: '10px 24px', fontSize: '14px', ...(followed ? {} : { background: theme, borderColor: theme }) }}>
                   {followed ? (
@@ -115,7 +142,7 @@ export default function ShopClient({ shop, shopProducts }: { shop: Shop; shopPro
       <div style={{ background: 'white', borderBottom: '1px solid var(--gray-100)' }}>
         <div className="container" style={{ padding: '0 24px' }}>
           <div style={{ display: 'flex', gap: '0' }}>
-            {[{ key: 'products', label: `Sản phẩm (${shopProducts.length})` }, { key: 'reviews', label: 'Đánh giá' }, { key: 'info', label: 'Thông tin shop' }].map(tab => (
+            {[{ key: 'products', label: `Sản phẩm (${shopProducts.length})` }, { key: 'reviews', label: `Đánh giá (${reviewTotal})` }, { key: 'info', label: 'Thông tin shop' }].map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key as typeof activeTab)}
                 style={{ padding: '16px 24px', border: 'none', background: 'transparent', fontWeight: activeTab === tab.key ? 700 : 400, color: activeTab === tab.key ? theme : 'var(--gray-600)', fontSize: '15px', cursor: 'pointer', borderBottom: `3px solid ${activeTab === tab.key ? theme : 'transparent'}`, transition: 'all 0.2s' }}>
                 {tab.label}
@@ -182,23 +209,32 @@ export default function ShopClient({ shop, shopProducts }: { shop: Shop; shopPro
         {activeTab === 'reviews' && (
           <div style={{ maxWidth: '640px' }}>
             <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', padding: '32px', textAlign: 'center', marginBottom: '24px' }}>
-              <div style={{ fontFamily: 'Playfair Display', fontSize: '60px', fontWeight: 800, color: 'var(--primary)' }}>{shop.rating}</div>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginBottom: '8px' }}>{[1, 2, 3, 4, 5].map(s => <Star key={s} size={20} fill="#f59e0b" color="#f59e0b" />)}</div>
-              <p style={{ color: 'var(--gray-500)', fontSize: '14px' }}>Đánh giá trung bình từ {formatNumber(shop.followers)} đánh giá</p>
+              <div style={{ fontFamily: 'Playfair Display', fontSize: '60px', fontWeight: 800, color: theme }}>{shop.rating}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginBottom: '8px' }}>{[1, 2, 3, 4, 5].map(s => <Star key={s} size={20} fill={s <= Math.round(shop.rating) ? '#f59e0b' : '#e5e5e5'} color={s <= Math.round(shop.rating) ? '#f59e0b' : '#e5e5e5'} />)}</div>
+              <p style={{ color: 'var(--gray-500)', fontSize: '14px' }}>Đánh giá trung bình từ {formatNumber(reviewTotal)} đánh giá</p>
             </div>
-            {[
-              { name: 'Nguyễn Văn B', comment: 'Shop rất uy tín, hàng chuẩn như mô tả. Sẽ tiếp tục ủng hộ!', rating: 5, date: '20/05/2025', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop' },
-              { name: 'Trần Thị C', comment: 'Giao hàng nhanh, đóng gói đẹp. Shop chăm sóc khách hàng rất tốt.', rating: 5, date: '18/05/2025', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop' },
-            ].map((r, i) => (
-              <div key={i} style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', padding: '20px', marginBottom: '12px', display: 'flex', gap: '14px' }}>
-                <img src={r.avatar} alt={r.name} style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                <div>
+            {shopReviews.length === 0 ? (
+              <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', padding: '48px', textAlign: 'center', color: 'var(--gray-400)' }}>
+                <Star size={40} style={{ marginBottom: '12px', opacity: 0.4 }} />
+                <p style={{ fontSize: '15px' }}>Shop chưa có đánh giá nào</p>
+              </div>
+            ) : shopReviews.map((r) => (
+              <div key={r.id} style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', padding: '20px', marginBottom: '12px', display: 'flex', gap: '14px' }}>
+                {r.avatar
+                  ? <img src={r.avatar} alt={r.userName} style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                  : <div style={{ width: '44px', height: '44px', borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700 }}>{r.userName.charAt(0).toUpperCase()}</div>}
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '14px' }}>{r.name}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--gray-400)' }}>{r.date}</span>
+                    <span style={{ fontWeight: 700, fontSize: '14px' }}>{r.userName}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--gray-400)' }}>{new Date(r.date).toLocaleDateString('vi-VN')}</span>
                   </div>
-                  <div style={{ display: 'flex', gap: '2px', marginBottom: '8px' }}>{[1, 2, 3, 4, 5].map(s => <Star key={s} size={13} fill="#f59e0b" color="#f59e0b" />)}</div>
-                  <p style={{ fontSize: '14px', color: 'var(--gray-600)' }}>{r.comment}</p>
+                  <div style={{ display: 'flex', gap: '2px', marginBottom: '8px' }}>{[1, 2, 3, 4, 5].map(s => <Star key={s} size={13} fill={s <= r.rating ? '#f59e0b' : '#e5e5e5'} color={s <= r.rating ? '#f59e0b' : '#e5e5e5'} />)}</div>
+                  {r.comment && <p style={{ fontSize: '14px', color: 'var(--gray-600)', marginBottom: r.images?.length ? '10px' : 0 }}>{r.comment}</p>}
+                  {r.images && r.images.length > 0 && (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {r.images.map((img, j) => <img key={j} src={img} alt="" style={{ width: '64px', height: '64px', borderRadius: '8px', objectFit: 'cover' }} />)}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -228,7 +264,7 @@ export default function ShopClient({ shop, shopProducts }: { shop: Shop; shopPro
                   { label: 'Danh mục chính', val: shop.category },
                   { label: 'Ngày tham gia', val: new Date(shop.joinedDate).toLocaleDateString('vi-VN') },
                   { label: 'Tổng sản phẩm', val: `${shop.products} sản phẩm` },
-                  { label: 'Người theo dõi', val: formatNumber(shop.followers) },
+                  { label: 'Người theo dõi', val: formatNumber(followers) },
                   { label: 'Tỷ lệ phản hồi', val: `${shop.responseRate}%` },
                   { label: 'Thời gian phản hồi', val: shop.responseTime },
                 ].map((info, i) => (

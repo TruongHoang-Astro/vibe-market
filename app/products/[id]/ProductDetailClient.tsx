@@ -82,6 +82,7 @@ export default function ProductDetailClient({
     setReviews([{ id: data.id, userId: user.id, userName, avatar: profile?.avatar_url ?? '', rating: revRating, comment: revComment.trim(), date: data.created_at, productId: product.id, images: revImages }, ...reviews]);
     setRevComment(''); setRevRating(5); setRevImages([]);
     toast.success('Cảm ơn đánh giá của bạn! 🌟');
+    router.refresh(); // cập nhật rating/số đánh giá tổng hợp (trigger DB)
   };
 
   const buildCartItem = () => ({

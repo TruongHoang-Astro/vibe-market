@@ -444,11 +444,7 @@ function SellerCTA() {
 function Testimonials({ reviews }: { reviews: Review[] }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-80px' });
-  const extReviews = [
-    ...reviews,
-    { id: 'r4', userName: 'Lê Quốc Hùng', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=50&h=50&fit=crop', rating: 5, comment: 'Tuyệt vời! Sản phẩm y chang hình, đóng gói cẩn thận. Giao hàng siêu nhanh, chỉ 1 ngày!', date: '2025-05-12', productId: 'p4', userId: 'u4' },
-    { id: 'r5', userName: 'Võ Thị Mai', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=50&h=50&fit=crop', rating: 5, comment: 'Vibe Market là app mua sắm tôi dùng nhiều nhất. Nhiều deal hot, giao nhanh, chất lượng đảm bảo.', date: '2025-05-10', productId: 'p5', userId: 'u5' },
-  ];
+  if (!reviews.length) return null; // chỉ hiện khi có đánh giá thật
 
   return (
     <section className="section" style={{ background: 'var(--gray-50)' }} ref={ref}>
@@ -461,16 +457,18 @@ function Testimonials({ reviews }: { reviews: Review[] }) {
         </motion.div>
         <div style={{ position: 'relative' }}>
           <div className="products-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
-            {extReviews.slice(0, 3).map((review, i) => (
+            {reviews.slice(0, 3).map((review, i) => (
               <motion.div key={review.id} initial={{ opacity: 0, y: 24 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ delay: i * 0.1, duration: 0.5 }}>
                 <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', padding: '28px', border: '1px solid var(--gray-100)', transition: 'var(--transition)' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-lg)'; (e.currentTarget as HTMLElement).style.borderColor = 'transparent'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--gray-100)'; }}
                 >
                   <div style={{ display: 'flex', marginBottom: '4px' }}>{[1, 2, 3, 4, 5].map(s => <Star key={s} size={16} fill="#f59e0b" color="#f59e0b" />)}</div>
-                  <p style={{ fontSize: '15px', color: 'var(--gray-700)', lineHeight: 1.7, marginBottom: '20px', fontStyle: 'italic' }}>"{review.comment}"</p>
+                  <p style={{ fontSize: '15px', color: 'var(--gray-700)', lineHeight: 1.7, marginBottom: '20px', fontStyle: 'italic' }}>"{review.comment || 'Sản phẩm tốt, sẽ ủng hộ shop!'}"</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <img src={review.avatar} alt={review.userName} style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }} />
+                    {review.avatar
+                      ? <img src={review.avatar} alt={review.userName} style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }} />
+                      : <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700 }}>{review.userName.charAt(0).toUpperCase()}</div>}
                     <div>
                       <div style={{ fontWeight: 700, fontSize: '14px' }}>{review.userName}</div>
                       <div style={{ fontSize: '12px', color: 'var(--gray-400)' }}>{new Date(review.date).toLocaleDateString('vi-VN')}</div>

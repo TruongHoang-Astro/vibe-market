@@ -14,7 +14,8 @@ import { useCartStore } from '@/lib/store/cart-store';
 import { useWishlistStore } from '@/lib/store/wishlist-store';
 import { useUser, signOutUser } from '@/lib/supabase/use-user';
 import { createClient } from '@/lib/supabase/client';
-import { categories, formatCount, formatPrice } from '@/lib/data/mock-data';
+import { formatCount, formatPrice } from '@/lib/data/mock-data';
+import type { Category } from '@/lib/data/mock-data';
 import { searchSuggestions, type Suggestion } from '@/app/actions/search';
 
 export default function Navbar() {
@@ -29,6 +30,7 @@ export default function Navbar() {
   const [loadingSug, setLoadingSug] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [catMenuOpen, setCatMenuOpen] = useState(false);
+  const [cats, setCats] = useState<Category[]>([]);
   const searchRef = useRef<HTMLInputElement>(null);
   const { getTotalItems, openCart } = useCartStore();
   const { items: wishlistItems } = useWishlistStore();
@@ -58,6 +60,12 @@ export default function Navbar() {
   };
 
   useEffect(() => setMounted(true), []);
+
+  // Danh mục thật từ DB
+  useEffect(() => {
+    createClient().from('categories').select('*').order('id')
+      .then(({ data }) => { if (data) setCats(data as Category[]); });
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -174,7 +182,7 @@ export default function Navbar() {
                     padding: '8px', minWidth: '220px', zIndex: 100,
                   }}
                 >
-                  {categories.map(cat => (
+                  {cats.map(cat => (
                     <Link key={cat.id} href={`/products?category=${cat.name}`} style={{ textDecoration: 'none' }}>
                       <motion.div
                         whileHover={{ x: 4 }}
@@ -411,7 +419,7 @@ export default function Navbar() {
 
             <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--gray-400)', marginBottom: '10px', letterSpacing: '0.5px' }}>DANH MỤC</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {categories.map(cat => (
+              {cats.map(cat => (
                 <Link key={cat.id} href={`/products?category=${cat.name}`} style={{ textDecoration: 'none' }}
                   onClick={() => setMobileOpen(false)}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', borderRadius: 'var(--radius)', border: '1px solid var(--gray-100)' }}>

@@ -371,6 +371,22 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['reports']['Insert']>;
         Relationships: [];
       };
+      shop_follows: {
+        Row: {
+          id: string;
+          user_id: string;
+          shop_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          shop_id: string;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['shop_follows']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };

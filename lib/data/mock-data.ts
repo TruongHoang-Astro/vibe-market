@@ -67,6 +67,10 @@ export interface Order {
   date: string;
   address: string;
   paymentMethod: string;
+  // Thông tin shop (sản phẩm đầu đơn) để mở chat — đính kèm bởi getMyOrders
+  shopId?: string;
+  shopName?: string;
+  shopLogo?: string;
 }
 
 export interface Category {

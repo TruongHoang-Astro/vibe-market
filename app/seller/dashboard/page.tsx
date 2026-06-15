@@ -332,7 +332,7 @@ export default function SellerDashboard() {
                   { label: 'Doanh thu', val: formatPrice(stats.totalRevenue), icon: <DollarSign size={20} />, change: 'thực', up: true, color: '#ef4444' },
                   { label: 'Đơn hàng', val: stats.totalOrders, icon: <ShoppingBag size={20} />, change: 'thực', up: true, color: '#2563eb' },
                   { label: 'Sản phẩm', val: sellerProducts.length, icon: <Package size={20} />, change: 'thực', up: true, color: '#16a34a' },
-                  { label: 'Lượt xem (demo)', val: '24.8K', icon: <Eye size={20} />, change: '-3.1%', up: false, color: '#f59e0b' },
+                  { label: 'Đánh giá shop', val: shop.rating ?? '5.0', icon: <Star size={20} />, change: 'thực', up: true, color: '#f59e0b' },
                 ].map((stat, i) => (
                   <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
                     style={{ background: 'white', borderRadius: '14px', padding: '20px', border: '1px solid #e5e7eb', position: 'relative', overflow: 'hidden' }}>

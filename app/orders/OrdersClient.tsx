@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, ChevronRight, Clock, CheckCircle2, Truck, XCircle, Star, RotateCcw, ShoppingBag, MessageCircle, LogIn } from 'lucide-react';
-import { products, shops, formatPrice } from '@/lib/data/mock-data';
+import { formatPrice } from '@/lib/data/mock-data';
 import type { Order } from '@/lib/data/mock-data';
 import { useChatStore } from '@/lib/store/chat-store';
 
@@ -29,12 +29,10 @@ export default function OrdersClient({ orders, loggedIn }: { orders: Order[]; lo
 
   const filtered = orders.filter(o => activeTab === 'all' || o.status === activeTab);
 
-  // Lấy thông tin shop từ product đầu tiên của đơn hàng (để mở chat)
+  // Thông tin shop (dữ liệu thật, đính kèm bởi getMyOrders) để mở chat
   const getShopInfo = (order: Order) => {
-    const firstProd = products.find(p => p.id === order.products[0]?.productId);
-    if (!firstProd) return null;
-    const shop = shops.find(s => s.id === firstProd.shopId);
-    return shop ? { id: shop.id, name: shop.name, logo: shop.logo } : { id: firstProd.shopId, name: firstProd.shopName, logo: '' };
+    if (!order.shopId) return null;
+    return { id: order.shopId, name: order.shopName ?? 'Shop', logo: order.shopLogo ?? '' };
   };
 
   return (

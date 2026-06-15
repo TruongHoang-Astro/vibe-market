@@ -288,6 +288,20 @@ export const getReviewsByProduct = cache(async (productId: string): Promise<Revi
   return (data ?? []).map(mapReview);
 });
 
+// Đánh giá thật của 1 shop = đánh giá trên tất cả sản phẩm của shop đó.
+export const getShopReviews = cache(async (shopId: string, limit = 30): Promise<{ reviews: Review[]; total: number }> => {
+  const supabase = await createClient();
+  const { data: prods } = await supabase.from('products').select('id').eq('shop_id', shopId);
+  const ids = (prods ?? []).map((p) => p.id);
+  if (!ids.length) return { reviews: [], total: 0 };
+  const [{ data, error }, { count }] = await Promise.all([
+    supabase.from('reviews').select('*').in('product_id', ids).order('created_at', { ascending: false }).limit(limit),
+    supabase.from('reviews').select('id', { count: 'exact', head: true }).in('product_id', ids),
+  ]);
+  if (error) { console.error('getShopReviews:', error.message); return { reviews: [], total: 0 }; }
+  return { reviews: (data ?? []).map(mapReview), total: count ?? 0 };
+});
+
 export const getRecentReviews = cache(async (limit = 3): Promise<Review[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -318,7 +332,7 @@ export async function getMyOrders(): Promise<Order[]> {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return ((data ?? []) as any[]).map((o) => ({
+  const orders: Order[] = ((data ?? []) as any[]).map((o) => ({
     id: o.id,
     userId: user.id,
     total: Number(o.total),
@@ -335,4 +349,19 @@ export async function getMyOrders(): Promise<Order[]> {
       image: it.image,
     })),
   }));
+
+  // Gắn thông tin shop (sản phẩm đầu mỗi đơn) để nút "Chat shop" dùng dữ liệu thật
+  const firstIds = [...new Set(orders.map((o) => o.products[0]?.productId).filter(Boolean))] as string[];
+  if (firstIds.length) {
+    const { data: prodRows } = await supabase
+      .from('products').select('id, shop_id, shops(name, logo)').in('id', firstIds);
+    const map = new Map<string, { shopId: string; name: string; logo: string }>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const pr of (prodRows ?? []) as any[]) map.set(pr.id, { shopId: pr.shop_id, name: pr.shops?.name ?? '', logo: pr.shops?.logo ?? '' });
+    for (const o of orders) {
+      const info = o.products[0]?.productId ? map.get(o.products[0].productId) : undefined;
+      if (info) { o.shopId = info.shopId; o.shopName = info.name; o.shopLogo = info.logo; }
+    }
+  }
+  return orders;
 }

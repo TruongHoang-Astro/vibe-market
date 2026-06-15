@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 import { Heart, ShoppingCart, Trash2, Star, ChevronRight, ShoppingBag } from 'lucide-react';
 import { useWishlistStore } from '@/lib/store/wishlist-store';
 import { useCartStore } from '@/lib/store/cart-store';
-import { formatPrice, formatNumber, products } from '@/lib/data/mock-data';
+import { formatPrice, formatNumber } from '@/lib/data/mock-data';
+import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
 export default function WishlistPage() {
@@ -16,16 +17,16 @@ export default function WishlistPage() {
 
   if (!mounted) return null;
 
-  const handleAddToCart = (item: typeof items[0]) => {
-    // Tìm sản phẩm đầy đủ để lấy shopId
-    const product = products.find(p => p.id === item.productId);
+  const handleAddToCart = async (item: typeof items[0]) => {
+    // Lấy shopId thật của sản phẩm từ DB
+    const { data } = await createClient().from('products').select('shop_id').eq('id', item.productId).maybeSingle();
     addItem({
       productId: item.productId,
       name: item.name,
       price: item.price,
       image: item.image,
       quantity: 1,
-      shopId: product?.shopId || 'unknown',
+      shopId: data?.shop_id || 'unknown',
       shopName: item.shopName,
     });
     openCart();

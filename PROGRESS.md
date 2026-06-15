@@ -219,6 +219,8 @@
 2. `supabase/shop_custom.sql` — cột theme/announcement + 3 chính sách cho shops.
 3. `supabase/admin.sql` — `profiles.status`, `is_admin()`, bảng `reports`, RLS admin.
    **Sau đó cấp quyền admin:** `update public.profiles set role='admin' where id='<uuid>';`
+4. `supabase/realdata.sql` — **REAL-DATA HÓA**: trigger tự tính `sold`/`stock`/`rating`/`reviews`/shop-stats
+   + bảng `shop_follows` + **BACKFILL reset số seed về số THẬT** (đa số SP về 0 đánh giá/0 đã bán — đúng dữ liệu thật).
 
 ### 1) Search + Advanced filter (full-text)
 - `search.sql`: cột `search_vector` (generated, unaccent) + GIN index.
@@ -250,6 +252,21 @@
   = in-app + email/SMS best-effort. **No-op nếu chưa cấu hình env** (RESEND_API_KEY/TWILIO_*).
 - `orders.ts` + `seller.ts` chuyển sang `createNotification` (đơn mới / đổi trạng thái → email tự động).
 - `.env.example`: thêm `NEXT_PUBLIC_SITE_URL`, `RESEND_API_KEY`, `NOTIFY_EMAIL_FROM`, `TWILIO_*` (tất cả tuỳ chọn).
+
+### 5) Real-data hóa toàn bộ (16/06/2026) — chính sách: tính thuần từ DB (reset seed)
+- `realdata.sql`: trigger `reviews→products.rating/reviews`, `order_items→products.sold/stock`,
+  `products→shops.rating/products`, `shop_follows→shops.followers`; **backfill** reset seed về số thật.
+- **Sao/đã bán/tồn kho/số đánh giá** giờ tự cập nhật theo hoạt động thật (review mới, đặt hàng).
+- **Trang shop** (`/shop/[id]`): đánh giá thật từ sản phẩm của shop ([getShopReviews]); bỏ 2 review hardcoded;
+  rating + tổng đánh giá thật. **Theo dõi shop** lưu DB thật ([app/actions/shop.ts] + `shop_follows`), followers thật.
+- **Navbar** dropdown danh mục: đọc bảng `categories` thật (trước đây hardcoded).
+- **Bỏ tra cứu mock**: cart dùng `shopName` của item; orders gắn shop info thật qua `getMyOrders`;
+  wishlist lấy `shop_id` thật từ DB khi thêm giỏ.
+- **Seller dashboard**: thẻ "Lượt xem (demo)" → "Đánh giá shop" (số thật). **Home Testimonials**: chỉ review thật (ẩn nếu trống).
+- ProductDetailClient: `router.refresh()` sau khi gửi đánh giá để cập nhật rating tổng hợp.
+- **Còn tĩnh (chấp nhận — là copy/marketing, không phải data)**: hero slides + dòng "2M+ đánh giá" ở home;
+  phương thức ship/thanh toán ở checkout (chờ payment gateway thật).
+- Build xanh 18 routes; smoke test: shop hiện "Đánh giá (1)" thật (không còn tên giả), navbar/home danh mục DB, không lỗi runtime.
 
 ---
 
