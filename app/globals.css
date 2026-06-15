@@ -388,6 +388,19 @@ h1, h2, h3 {
 .step-line { flex: 1; height: 2px; background: var(--gray-200); transition: var(--transition); }
 .step-line.done { background: var(--primary); }
 
+/* Trang chi tiết sản phẩm: thanh thao tác cố định dưới (mobile) */
+.pd-bottom-bar { display: none; }
+@media (max-width: 768px) {
+  .pd-page { padding-bottom: 66px; }
+  .pd-actions-inline { display: none !important; }
+  .pd-gallery { position: static !important; top: auto !important; }
+  .pd-bottom-bar {
+    display: flex !important; position: fixed; bottom: 0; left: 0; right: 0; z-index: 45;
+    height: 58px; background: white; border-top: 1px solid var(--gray-200);
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.07);
+  }
+}
+
 /* Header sáng cho các trang phụ (đè màu chữ trắng cũ) */
 .page-hero { background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%) !important; }
 .page-hero h1 { color: var(--black) !important; }
