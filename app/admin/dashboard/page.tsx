@@ -62,27 +62,27 @@ export default function AdminDashboard() {
       {sidebarOpen && <div className="dash-backdrop" onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 55 }} />}
 
       {/* Sidebar */}
-      <aside className={`dash-sidebar ${sidebarOpen ? 'open' : ''}`} style={{ width: '240px', background: 'linear-gradient(180deg, #0a0a0a 0%, #1a0000 100%)', flexShrink: 0, display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 30, overflowY: 'auto' }}>
-        <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+      <aside className={`dash-sidebar ${sidebarOpen ? 'open' : ''}`} style={{ width: '240px', background: 'white', borderRight: '1px solid var(--gray-200)', flexShrink: 0, display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 30, overflowY: 'auto' }}>
+        <div style={{ padding: '24px 20px', borderBottom: '1px solid var(--gray-100)' }}>
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #ef4444, #f43f5e)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Zap size={18} color="white" fill="white" />
             </div>
             <div>
-              <div style={{ fontFamily: 'Playfair Display, serif', fontWeight: 800, fontSize: '16px', color: 'white' }}>VibeMarket</div>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>Admin Panel</div>
+              <div style={{ fontFamily: 'Playfair Display, serif', fontWeight: 800, fontSize: '16px', color: 'var(--black)' }}>VibeMarket</div>
+              <div style={{ fontSize: '11px', color: 'var(--gray-400)' }}>Admin Panel</div>
             </div>
           </Link>
         </div>
 
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--gray-100)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #ef4444, #f43f5e)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Shield size={18} color="white" />
             </div>
             <div>
-              <div style={{ fontWeight: 600, fontSize: '13px', color: 'white' }}>Super Admin</div>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>admin@vibemarket.vn</div>
+              <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--black)' }}>Super Admin</div>
+              <div style={{ fontSize: '11px', color: 'var(--gray-400)' }}>admin@vibemarket.vn</div>
             </div>
           </div>
         </div>
@@ -93,14 +93,14 @@ export default function AdminDashboard() {
               style={{
                 width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px',
                 borderRadius: '8px', border: 'none', cursor: 'pointer', marginBottom: '2px',
-                background: activeTab === item.key ? 'rgba(239,68,68,0.25)' : 'transparent',
+                background: activeTab === item.key ? 'rgba(239,68,68,0.1)' : 'transparent',
                 transition: 'all 0.15s', textAlign: 'left',
               }}
-              onMouseEnter={e => { if (activeTab !== item.key) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)'; }}
+              onMouseEnter={e => { if (activeTab !== item.key) (e.currentTarget as HTMLElement).style.background = 'var(--gray-50)'; }}
               onMouseLeave={e => { if (activeTab !== item.key) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
             >
-              <span style={{ color: activeTab === item.key ? '#fca5a5' : 'rgba(255,255,255,0.45)', flexShrink: 0 }}>{item.icon}</span>
-              <span style={{ color: activeTab === item.key ? 'white' : 'rgba(255,255,255,0.55)', fontSize: '14px', fontWeight: activeTab === item.key ? 600 : 400 }}>{item.label}</span>
+              <span style={{ color: activeTab === item.key ? 'var(--primary)' : 'var(--gray-500)', flexShrink: 0 }}>{item.icon}</span>
+              <span style={{ color: activeTab === item.key ? 'var(--primary)' : 'var(--gray-600)', fontSize: '14px', fontWeight: activeTab === item.key ? 600 : 400 }}>{item.label}</span>
               {item.key === 'shops' && (
                 <span style={{ marginLeft: 'auto', background: '#ef4444', color: 'white', fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '99px' }}>3</span>
               )}
@@ -108,14 +108,14 @@ export default function AdminDashboard() {
           ))}
         </nav>
 
-        <div style={{ padding: '12px 12px 20px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ padding: '12px 12px 20px', borderTop: '1px solid var(--gray-100)' }}>
           <Link href="/"
             style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', borderRadius: '8px', textDecoration: 'none', transition: 'all 0.15s' }}
-            onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.06)')}
+            onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.background = 'var(--gray-50)')}
             onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.background = 'transparent')}
           >
-            <LogOut size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
-            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px' }}>Về trang chủ</span>
+            <LogOut size={16} style={{ color: 'var(--gray-400)' }} />
+            <span style={{ color: 'var(--gray-600)', fontSize: '14px' }}>Về trang chủ</span>
           </Link>
         </div>
       </aside>

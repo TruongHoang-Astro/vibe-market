@@ -231,28 +231,28 @@ export default function SellerDashboard() {
 
       {/* Sidebar */}
       <aside className={`dash-sidebar ${sidebarOpen ? 'open' : ''}`} style={{
-        width: '240px', background: '#0a0a0a', flexShrink: 0,
+        width: '240px', background: 'white', borderRight: '1px solid var(--gray-200)', flexShrink: 0,
         display: 'flex', flexDirection: 'column', position: 'fixed',
         top: 0, left: 0, bottom: 0, zIndex: 30, overflowY: 'auto',
       }}>
-        <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ padding: '24px 20px', borderBottom: '1px solid var(--gray-100)' }}>
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #ef4444, #f43f5e)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Zap size={18} color="white" fill="white" />
             </div>
             <div>
-              <div style={{ fontFamily: 'Playfair Display, serif', fontWeight: 800, fontSize: '16px', color: 'white' }}>VibeMarket</div>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '-2px' }}>Seller Center</div>
+              <div style={{ fontFamily: 'Playfair Display, serif', fontWeight: 800, fontSize: '16px', color: 'var(--black)' }}>VibeMarket</div>
+              <div style={{ fontSize: '11px', color: 'var(--gray-400)', marginTop: '-2px' }}>Seller Center</div>
             </div>
           </Link>
         </div>
 
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--gray-100)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <img src={logoSrc} alt={shop.name} style={{ width: '38px', height: '38px', borderRadius: '10px', objectFit: 'cover' }} />
             <div>
-              <div style={{ fontWeight: 600, fontSize: '13px', color: 'white' }}>{shop.name}</div>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{shop.category}</div>
+              <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--black)' }}>{shop.name}</div>
+              <div style={{ fontSize: '11px', color: 'var(--gray-400)' }}>{shop.category}</div>
             </div>
           </div>
         </div>
@@ -261,17 +261,17 @@ export default function SellerDashboard() {
           {navItems.map(item => (
             <button key={item.key} onClick={() => { setActiveTab(item.key); setSidebarOpen(false); }}
               className={`sidebar-item ${activeTab === item.key ? 'active' : ''}`}
-              style={{ width: '100%', background: activeTab === item.key ? 'rgba(239,68,68,0.2)' : 'transparent', border: 'none', marginBottom: '2px', justifyContent: 'flex-start' }}>
-              <span style={{ color: activeTab === item.key ? '#fca5a5' : 'rgba(255,255,255,0.5)' }}>{item.icon}</span>
-              <span style={{ color: activeTab === item.key ? 'white' : 'rgba(255,255,255,0.6)', fontSize: '14px' }}>{item.label}</span>
+              style={{ width: '100%', background: activeTab === item.key ? 'rgba(239,68,68,0.1)' : 'transparent', border: 'none', marginBottom: '2px', justifyContent: 'flex-start' }}>
+              <span style={{ color: activeTab === item.key ? 'var(--primary)' : 'var(--gray-500)' }}>{item.icon}</span>
+              <span style={{ color: activeTab === item.key ? 'var(--primary)' : 'var(--gray-600)', fontSize: '14px', fontWeight: activeTab === item.key ? 600 : 400 }}>{item.label}</span>
             </button>
           ))}
         </nav>
 
-        <div style={{ padding: '16px 12px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ padding: '16px 12px', borderTop: '1px solid var(--gray-100)' }}>
           <Link href="/" className="sidebar-item" style={{ textDecoration: 'none', border: 'none', background: 'transparent', width: '100%' }}>
-            <LogOut size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
-            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px' }}>Thoát về trang chủ</span>
+            <LogOut size={16} style={{ color: 'var(--gray-400)' }} />
+            <span style={{ color: 'var(--gray-600)', fontSize: '14px' }}>Thoát về trang chủ</span>
           </Link>
         </div>
       </aside>
