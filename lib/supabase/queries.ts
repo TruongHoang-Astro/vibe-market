@@ -28,6 +28,7 @@ type ProductRow = {
   sizes: string[] | null;
   is_flash_sale: boolean;
   flash_sale_price: number | null;
+  size_guide?: { size: string; value: string }[] | null;
   shops?: { name: string } | null;
 };
 
@@ -56,6 +57,7 @@ function mapProduct(row: ProductRow): Product {
     sizes: row.sizes ?? undefined,
     isFlashSale: row.is_flash_sale,
     flashSalePrice: row.flash_sale_price != null ? Number(row.flash_sale_price) : undefined,
+    sizeGuide: Array.isArray(row.size_guide) && row.size_guide.length > 0 ? row.size_guide : undefined,
   };
 }
 
@@ -116,7 +118,14 @@ export const getProductById = cache(async (id: string): Promise<Product | null> 
     console.error('getProductById:', error.message);
     return null;
   }
-  return data ? mapProduct(data as unknown as ProductRow) : null;
+  if (!data) return null;
+  const productObj = mapProduct(data as unknown as ProductRow);
+  // Lấy size_guide riêng (cột mới — nếu chưa chạy sizeguide.sql thì bỏ qua, không vỡ trang)
+  const { data: sg } = await supabase.from('products').select('size_guide').eq('id', id).maybeSingle();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const guide = (sg as any)?.size_guide;
+  if (Array.isArray(guide) && guide.length > 0) productObj.sizeGuide = guide;
+  return productObj;
 });
 
 export const getFlashSaleProducts = cache(async (): Promise<Product[]> => {

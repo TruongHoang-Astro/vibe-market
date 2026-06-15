@@ -56,6 +56,7 @@ function mapRow(r: any) {
     price: Number(r.price), originalPrice: Number(r.original_price),
     stock: r.stock as number, sold: r.sold as number, rating: Number(r.rating),
     description: (r.description ?? '') as string,
+    sizeGuide: (Array.isArray(r.size_guide) ? r.size_guide : []) as { size: string; value: string }[],
   };
 }
 
@@ -87,6 +88,7 @@ export default function SellerDashboard() {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [productForm, setProductForm] = useState({ name: '', category: '', price: '', salePrice: '', stock: '', description: '' });
   const [productImage, setProductImage] = useState('');
+  const [sizeGuide, setSizeGuide] = useState<{ size: string; value: string }[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -126,7 +128,7 @@ export default function SellerDashboard() {
 
   const resetForm = () => {
     setProductForm({ name: '', category: '', price: '', salePrice: '', stock: '', description: '' });
-    setProductImage(''); setEditingId(null);
+    setProductImage(''); setSizeGuide([]); setEditingId(null);
   };
   const openAdd = () => { resetForm(); setShowAddProduct(true); };
   const openEdit = (p: ReturnType<typeof mapRow>) => {
@@ -138,6 +140,7 @@ export default function SellerDashboard() {
       stock: String(p.stock), description: p.description || '',
     });
     setProductImage(p.image || '');
+    setSizeGuide(p.sizeGuide || []);
     setShowAddProduct(true);
   };
 
@@ -164,7 +167,7 @@ export default function SellerDashboard() {
       price: Number(productForm.price || 0),
       salePrice: productForm.salePrice ? Number(productForm.salePrice) : undefined,
       stock: Number(productForm.stock || 0),
-      description: productForm.description, image: productImage,
+      description: productForm.description, image: productImage, sizeGuide,
     };
     const res = editingId ? await updateProduct(editingId, input) : await createProduct(input);
     setSubmitting(false);
@@ -684,6 +687,22 @@ export default function SellerDashboard() {
                   <div>
                     <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '8px' }}>Mô tả sản phẩm</label>
                     <textarea value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} placeholder="Mô tả chi tiết sản phẩm..." style={{ width: '100%', padding: '12px 16px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', fontFamily: 'Inter', resize: 'vertical', minHeight: '100px', outline: 'none' }} />
+                  </div>
+
+                  {/* Bảng hướng dẫn chọn size */}
+                  <div>
+                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '8px' }}>Bảng chọn size (tuỳ chọn)</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {sizeGuide.map((row, i) => (
+                        <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <input value={row.size} onChange={e => setSizeGuide(sizeGuide.map((r, idx) => idx === i ? { ...r, size: e.target.value } : r))} placeholder="Size (vd: 35)" className="input-base" style={{ flex: 1 }} />
+                          <input value={row.value} onChange={e => setSizeGuide(sizeGuide.map((r, idx) => idx === i ? { ...r, value: e.target.value } : r))} placeholder="Thông số (vd: 22.5 cm)" className="input-base" style={{ flex: 1.4 }} />
+                          <button type="button" onClick={() => setSizeGuide(sizeGuide.filter((_, idx) => idx !== i))} style={{ padding: '9px', border: '1px solid #fee2e2', borderRadius: '8px', background: '#fff5f5', color: '#dc2626', cursor: 'pointer', flexShrink: 0 }}><Trash2 size={15} /></button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => setSizeGuide([...sizeGuide, { size: '', value: '' }])} style={{ alignSelf: 'flex-start', padding: '8px 14px', border: '1.5px dashed #e5e7eb', borderRadius: '8px', background: 'white', color: '#374151', cursor: 'pointer', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}><Plus size={14} /> Thêm dòng size</button>
+                    </div>
+                    <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px' }}>Hiện thành bảng &quot;Hướng dẫn chọn size&quot; ở trang sản phẩm.</p>
                   </div>
 
                   {productForm.price && productForm.salePrice && Number(productForm.salePrice) < Number(productForm.price) && (

@@ -21,6 +21,7 @@ export interface Product {
   sizes?: string[];
   isFlashSale?: boolean;
   flashSalePrice?: number;
+  sizeGuide?: { size: string; value: string }[];
 }
 
 export interface Shop {

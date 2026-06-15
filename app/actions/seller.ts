@@ -15,6 +15,7 @@ export interface ProductInput {
   stock: number;
   description: string;
   image: string;
+  sizeGuide?: { size: string; value: string }[];  // bảng hướng dẫn chọn size
 }
 
 async function ctx() {
@@ -32,6 +33,11 @@ function priceFields(input: ProductInput) {
   const selling = input.salePrice && input.salePrice > 0 ? Math.round(input.salePrice) : original;
   const badge: 'sale' | 'new' = selling < original ? 'sale' : 'new';
   return { original, selling, badge };
+}
+
+// Lọc bỏ dòng size guide trống
+function cleanGuide(g?: { size: string; value: string }[]): { size: string; value: string }[] {
+  return (g ?? []).filter(r => (r.size?.trim() || r.value?.trim())).map(r => ({ size: (r.size || '').trim(), value: (r.value || '').trim() }));
 }
 
 export async function createProduct(input: ProductInput): Promise<{ ok?: true; error?: string }> {
@@ -56,6 +62,7 @@ export async function createProduct(input: ProductInput): Promise<{ ok?: true; e
     stock: Math.max(0, Math.round(input.stock || 0)),
     description: input.description || '',
     badge,
+    ...(cleanGuide(input.sizeGuide).length ? { size_guide: cleanGuide(input.sizeGuide) } : {}),
   });
   if (error) { console.error('createProduct:', error.message); return { error: 'Đăng sản phẩm thất bại' }; }
   return { ok: true };
@@ -76,6 +83,8 @@ export async function updateProduct(id: string, input: ProductInput): Promise<{ 
     description: input.description || '',
     badge,
   };
+  const guide = cleanGuide(input.sizeGuide);
+  if (guide.length) patch.size_guide = guide;
   if (input.image) { patch.image = input.image; patch.images = [input.image]; }
 
   // .eq shop_id để chắc chắn chỉ sửa SP của shop mình (RLS cũng chặn)

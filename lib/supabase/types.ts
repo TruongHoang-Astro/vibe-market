@@ -122,6 +122,7 @@ export interface Database {
           sizes: string[] | null;
           is_flash_sale: boolean;
           flash_sale_price: number | null;
+          size_guide: Json;
           created_at: string;
         };
         Insert: {
@@ -144,6 +145,7 @@ export interface Database {
           sizes?: string[] | null;
           is_flash_sale?: boolean;
           flash_sale_price?: number | null;
+          size_guide?: Json;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['products']['Insert']>;

@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import {
   Star, Heart, Share2, ShoppingCart, Zap, Shield,
   Truck, RotateCcw, ChevronRight, Plus, Minus, Store, CheckCircle2,
-  ChevronLeft, ChevronDown, MessageCircle, ShieldCheck,
+  ChevronLeft, ChevronDown, MessageCircle, ShieldCheck, Ruler, Camera, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPrice, formatNumber } from '@/lib/data/mock-data';
@@ -16,6 +16,7 @@ import { useWishlistStore } from '@/lib/store/wishlist-store';
 import { useChatStore } from '@/lib/store/chat-store';
 import { useUser } from '@/lib/supabase/use-user';
 import { createClient } from '@/lib/supabase/client';
+import { uploadChatMedia } from '@/app/actions/chat';
 
 interface ShopInfo { name: string; logo: string; rating: number; products: number; response_rate: number; verified: boolean }
 
@@ -49,7 +50,22 @@ export default function ProductDetailClient({
   const [reviews, setReviews] = useState<Review[]>(productReviews);
   const [revRating, setRevRating] = useState(5);
   const [revComment, setRevComment] = useState('');
+  const [revImages, setRevImages] = useState<string[]>([]);
   const [revSubmitting, setRevSubmitting] = useState(false);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+
+  const handleRevImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async ev => {
+      const { url, error } = await uploadChatMedia(ev.target?.result as string);
+      if (error || !url) { toast.error('Upload ảnh thất bại'); return; }
+      setRevImages(prev => [...prev, url]);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
 
   const handleSubmitReview = async () => {
     if (!user) { toast('Đăng nhập để đánh giá nhé!'); return; }
@@ -58,12 +74,12 @@ export default function ProductDetailClient({
     const supabase = createClient();
     const userName = profile?.full_name || user.email?.split('@')[0] || 'Người dùng';
     const { data, error } = await supabase.from('reviews')
-      .insert({ product_id: product.id, user_id: user.id, user_name: userName, avatar: profile?.avatar_url ?? null, rating: revRating, comment: revComment.trim() })
+      .insert({ product_id: product.id, user_id: user.id, user_name: userName, avatar: profile?.avatar_url ?? null, rating: revRating, comment: revComment.trim(), images: revImages })
       .select('*').single();
     setRevSubmitting(false);
     if (error || !data) { toast.error('Gửi đánh giá thất bại'); return; }
-    setReviews([{ id: data.id, userId: user.id, userName, avatar: profile?.avatar_url ?? '', rating: revRating, comment: revComment.trim(), date: data.created_at, productId: product.id }, ...reviews]);
-    setRevComment(''); setRevRating(5);
+    setReviews([{ id: data.id, userId: user.id, userName, avatar: profile?.avatar_url ?? '', rating: revRating, comment: revComment.trim(), date: data.created_at, productId: product.id, images: revImages }, ...reviews]);
+    setRevComment(''); setRevRating(5); setRevImages([]);
     toast.success('Cảm ơn đánh giá của bạn! 🌟');
   };
 
@@ -285,6 +301,34 @@ export default function ProductDetailClient({
           )}
         </div>
 
+        {/* Hướng dẫn chọn kích cỡ (collapsible) — do seller nhập */}
+        {product.sizeGuide && product.sizeGuide.length > 0 && (
+          <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', marginBottom: '16px', overflow: 'hidden' }}>
+            <button onClick={() => setSizeGuideOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'none', border: 'none', cursor: 'pointer' }}>
+              <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--black)', display: 'flex', alignItems: 'center', gap: '8px' }}><Ruler size={18} style={{ color: 'var(--primary)' }} /> Hướng dẫn chọn kích cỡ</span>
+              <ChevronDown size={20} style={{ color: 'var(--gray-400)', transform: sizeGuideOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            </button>
+            {sizeGuideOpen && (
+              <div style={{ padding: '0 20px 20px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                  <thead><tr>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', background: 'var(--gray-50)', borderBottom: '1px solid var(--gray-200)', fontWeight: 600, color: 'var(--gray-600)' }}>Size</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', background: 'var(--gray-50)', borderBottom: '1px solid var(--gray-200)', fontWeight: 600, color: 'var(--gray-600)' }}>Thông số</th>
+                  </tr></thead>
+                  <tbody>
+                    {product.sizeGuide.map((row, i) => (
+                      <tr key={i}>
+                        <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--gray-100)', fontWeight: 600 }}>{row.size}</td>
+                        <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--gray-100)', color: 'var(--gray-600)' }}>{row.value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Description (collapsible) */}
         <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', marginBottom: '16px', overflow: 'hidden' }}>
           <button onClick={() => setDescOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -328,6 +372,20 @@ export default function ProductDetailClient({
                 <textarea value={revComment} onChange={e => setRevComment(e.target.value)} placeholder="Chia sẻ cảm nhận của bạn về sản phẩm..." rows={3}
                   style={{ width: '100%', padding: '12px 14px', border: '1.5px solid var(--gray-200)', borderRadius: '10px', fontSize: '14px', fontFamily: 'Inter', resize: 'vertical', outline: 'none', marginBottom: '12px' }}
                   onFocus={e => (e.target.style.borderColor = 'var(--primary)')} onBlur={e => (e.target.style.borderColor = 'var(--gray-200)')} />
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                  {revImages.map((url, i) => (
+                    <div key={i} style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--gray-200)' }}>
+                      <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button onClick={() => setRevImages(revImages.filter((_, idx) => idx !== i))} style={{ position: 'absolute', top: '2px', right: '2px', width: '18px', height: '18px', borderRadius: '50%', background: 'rgba(0,0,0,0.6)', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}><X size={12} /></button>
+                    </div>
+                  ))}
+                  {revImages.length < 5 && (
+                    <label style={{ width: '60px', height: '60px', borderRadius: '8px', border: '1.5px dashed var(--gray-300)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--gray-400)', fontSize: '10px', gap: '2px' }}>
+                      <Camera size={18} /> Ảnh
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleRevImage} />
+                    </label>
+                  )}
+                </div>
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleSubmitReview} disabled={revSubmitting}
                   className="btn-primary" style={{ padding: '10px 24px', borderRadius: '10px', fontSize: '14px', opacity: revSubmitting ? 0.7 : 1 }}>
                   <span>{revSubmitting ? 'Đang gửi...' : 'Gửi đánh giá'}</span>
@@ -358,6 +416,13 @@ export default function ProductDetailClient({
                     </div>
                     <div style={{ display: 'flex', gap: '2px', marginBottom: '6px' }}>{[1, 2, 3, 4, 5].map(s => <Star key={s} size={13} fill={s <= r.rating ? '#f59e0b' : '#e5e5e5'} color={s <= r.rating ? '#f59e0b' : '#e5e5e5'} />)}</div>
                     <p style={{ fontSize: '14px', color: 'var(--gray-600)', lineHeight: 1.7 }}>{r.comment}</p>
+                    {r.images && r.images.length > 0 && (
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
+                        {r.images.map((url, idx) => (
+                          <img key={idx} src={url} alt="" onClick={() => window.open(url, '_blank')} style={{ width: '72px', height: '72px', borderRadius: '8px', objectFit: 'cover', cursor: 'pointer', border: '1px solid var(--gray-200)' }} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
