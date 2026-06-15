@@ -38,6 +38,12 @@ export interface Shop {
   description: string;
   category: string;
   verified: boolean;
+  // Tùy chỉnh + chính sách (Scale phase — chỉ có sau khi chạy shop_custom.sql)
+  themeColor?: string;
+  announcement?: string;
+  returnPolicy?: string;
+  shippingPolicy?: string;
+  warrantyPolicy?: string;
 }
 
 export interface Review {

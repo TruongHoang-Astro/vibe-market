@@ -2,6 +2,7 @@
 // Server Action tạo đơn hàng — chạy phía server, có session qua cookie.
 // Tính tổng tiền phía server (không tin client), RLS đảm bảo chỉ tạo đơn cho chính mình.
 import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { createNotification } from '@/lib/notify';
 
 export interface NewOrderItem {
   productId: string;
@@ -60,11 +61,11 @@ export async function createOrder(
     return { error: 'Không lưu được sản phẩm trong đơn' };
   }
 
-  // Thông báo (best-effort, dùng admin để gửi cho cả người mua lẫn chủ shop)
+  // Thông báo (best-effort) — in-app + email (Resend nếu đã cấu hình env)
   try {
     const admin = createAdminClient();
-    await admin.from('notifications').insert({
-      user_id: user.id, type: 'order',
+    await createNotification(admin, {
+      userId: user.id, type: 'order',
       title: 'Đặt hàng thành công 🎉',
       message: `Đơn ${order.id} đã được tạo. Cảm ơn bạn đã mua sắm!`,
       link: '/orders',
@@ -75,14 +76,12 @@ export async function createOrder(
     if (shopIds.length) {
       const { data: shops } = await admin.from('shops').select('owner_id').in('id', shopIds);
       const owners = [...new Set((shops ?? []).map(s => s.owner_id).filter((o): o is string => !!o))];
-      if (owners.length) {
-        await admin.from('notifications').insert(owners.map(o => ({
-          user_id: o, type: 'order',
-          title: 'Đơn hàng mới! 🛍️',
-          message: `Bạn có đơn hàng mới ${order.id}`,
-          link: '/seller/dashboard',
-        })));
-      }
+      await Promise.all(owners.map(o => createNotification(admin, {
+        userId: o, type: 'order',
+        title: 'Đơn hàng mới! 🛍️',
+        message: `Bạn có đơn hàng mới ${order.id}`,
+        link: '/seller/dashboard',
+      })));
     }
   } catch (e) {
     console.error('createOrder (notif):', e);

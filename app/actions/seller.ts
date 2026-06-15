@@ -2,6 +2,7 @@
 // Server Actions cho seller: CRUD sản phẩm + cập nhật gian hàng.
 // RLS đảm bảo chỉ chủ shop thao tác được; ở đây verify thêm để báo lỗi rõ ràng.
 import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { createNotification } from '@/lib/notify';
 import type { Database, OrderStatus } from '@/lib/supabase/types';
 
 type ProductUpdate = Database['public']['Tables']['products']['Update'];
@@ -193,10 +194,10 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
   const { error } = await admin.from('orders').update({ status }).eq('id', orderId);
   if (error) { console.error('updateOrderStatus:', error.message); return { error: 'Cập nhật trạng thái thất bại' }; }
 
-  // Thông báo cho người mua
+  // Thông báo cho người mua (in-app + email best-effort)
   if (order.user_id) {
-    await admin.from('notifications').insert({
-      user_id: order.user_id,
+    await createNotification(admin, {
+      userId: order.user_id,
       type: 'order',
       title: `Đơn hàng ${orderId}`,
       message: `Đơn của bạn đã chuyển sang trạng thái: ${STATUS_LABEL[status] ?? status}`,
@@ -212,6 +213,12 @@ export interface ShopInput {
   category: string;
   logo?: string;
   banner?: string;
+  // Tùy chỉnh + chính sách (cần shop_custom.sql). undefined = không đổi.
+  themeColor?: string;
+  announcement?: string;
+  returnPolicy?: string;
+  shippingPolicy?: string;
+  warrantyPolicy?: string;
 }
 
 export async function updateShop(input: ShopInput): Promise<{ ok?: true; error?: string }> {
@@ -225,6 +232,11 @@ export async function updateShop(input: ShopInput): Promise<{ ok?: true; error?:
   };
   if (input.logo) patch.logo = input.logo;
   if (input.banner) patch.banner = input.banner;
+  if (input.themeColor !== undefined) patch.theme_color = input.themeColor || '#EF4444';
+  if (input.announcement !== undefined) patch.announcement = input.announcement;
+  if (input.returnPolicy !== undefined) patch.return_policy = input.returnPolicy;
+  if (input.shippingPolicy !== undefined) patch.shipping_policy = input.shippingPolicy;
+  if (input.warrantyPolicy !== undefined) patch.warranty_policy = input.warrantyPolicy;
   const { error } = await supabase.from('shops').update(patch).eq('id', shop.id);
   if (error) { console.error('updateShop:', error.message); return { error: 'Lưu thất bại' }; }
   return { ok: true };

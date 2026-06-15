@@ -29,7 +29,7 @@ const priceRanges = [
   { label: 'Trên 5 triệu', min: 5000000, max: Infinity },
 ];
 
-function ProductsContent({ allProducts, categories }: { allProducts: Product[]; categories: Category[] }) {
+function ProductsContent({ allProducts, categories, searchTerm }: { allProducts: Product[]; categories: Category[]; searchTerm: string }) {
   const searchParams = useSearchParams();
   const paramsKey = searchParams.toString();
 
@@ -49,10 +49,12 @@ function ProductsContent({ allProducts, categories }: { allProducts: Product[]; 
   const [page, setPage] = useState(1);
   const { addItem, openCart } = useCartStore();
 
-  // Đồng bộ bộ lọc theo query string mỗi khi URL thay đổi
+  // Đồng bộ bộ lọc theo query string mỗi khi URL thay đổi.
+  // Lưu ý: ?search= đã được full-text phía server xử lý (searchTerm) → ô tìm kiếm
+  // ở đây là "lọc trong kết quả" phía client, luôn bắt đầu rỗng khi có tìm kiếm mới.
   useEffect(() => {
     setSelectedCategory(searchParams.get('category') || 'Tất cả');
-    setSearchQuery(searchParams.get('search') || '');
+    setSearchQuery('');
     setFlashOnly(searchParams.get('flash') === 'true');
     setSaleOnly(searchParams.get('sale') === 'true');
     setBadgeFilter(searchParams.get('badge'));
@@ -75,7 +77,7 @@ function ProductsContent({ allProducts, categories }: { allProducts: Product[]; 
     setSearchQuery('');
   };
 
-  const pageTitle = searchQuery ? `Kết quả cho “${searchQuery}”`
+  const pageTitle = searchTerm ? `Kết quả cho “${searchTerm}”`
     : flashOnly ? '⚡ Flash Sale'
     : saleOnly ? 'Đang Khuyến Mãi'
     : badgeFilter === 'new' ? 'Sản Phẩm Mới'
@@ -435,12 +437,12 @@ function ProductListItem({ product, index, onAddCart }: { product: Product; inde
   );
 }
 
-export default function ProductsClient({ allProducts, categories }: { allProducts: Product[]; categories: Category[] }) {
+export default function ProductsClient({ allProducts, categories, searchTerm = '' }: { allProducts: Product[]; categories: Category[]; searchTerm?: string }) {
   return (
     <Suspense fallback={<div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Flame size={32} style={{ color: 'var(--primary)', animation: 'pulse-red 2s infinite' }} />
     </div>}>
-      <ProductsContent allProducts={allProducts} categories={categories} />
+      <ProductsContent allProducts={allProducts} categories={categories} searchTerm={searchTerm} />
     </Suspense>
   );
 }

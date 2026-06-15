@@ -101,6 +101,7 @@ export default function SellerDashboard() {
   const [shopForm, setShopForm] = useState({ name: '', description: '', category: '' });
   const [shopLogo, setShopLogo] = useState('');
   const [shopBanner, setShopBanner] = useState('');
+  const [shopCustom, setShopCustom] = useState({ themeColor: '#EF4444', announcement: '', returnPolicy: '', shippingPolicy: '', warrantyPolicy: '' });
   const [savingShop, setSavingShop] = useState(false);
   const [sellerOrders, setSellerOrders] = useState<SellerOrder[]>([]);
   const [stats, setStats] = useState<SellerStats>({ totalRevenue: 0, totalOrders: 0, monthly: [] });
@@ -114,6 +115,13 @@ export default function SellerDashboard() {
       setShopForm({ name: myShop.name ?? '', description: myShop.description ?? '', category: myShop.category ?? '' });
       setShopLogo(myShop.logo ?? '');
       setShopBanner(myShop.banner ?? '');
+      setShopCustom({
+        themeColor: myShop.theme_color ?? '#EF4444',
+        announcement: myShop.announcement ?? '',
+        returnPolicy: myShop.return_policy ?? '',
+        shippingPolicy: myShop.shipping_policy ?? '',
+        warrantyPolicy: myShop.warranty_policy ?? '',
+      });
       const { data: prods } = await supabase.from('products').select('*').eq('shop_id', myShop.id).order('created_at', { ascending: false });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setSellerProducts(((prods ?? []) as any[]).map(mapRow));
@@ -203,7 +211,12 @@ export default function SellerDashboard() {
 
   const handleSaveShop = async () => {
     setSavingShop(true);
-    const res = await updateShop({ name: shopForm.name, description: shopForm.description, category: shopForm.category, logo: shopLogo, banner: shopBanner });
+    const res = await updateShop({
+      name: shopForm.name, description: shopForm.description, category: shopForm.category,
+      logo: shopLogo, banner: shopBanner,
+      themeColor: shopCustom.themeColor, announcement: shopCustom.announcement,
+      returnPolicy: shopCustom.returnPolicy, shippingPolicy: shopCustom.shippingPolicy, warrantyPolicy: shopCustom.warrantyPolicy,
+    });
     setSavingShop(false);
     if (res.error) { toast.error(res.error); return; }
     toast.success('Đã lưu thông tin gian hàng');
@@ -598,6 +611,49 @@ export default function SellerDashboard() {
                     <span>{savingShop ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Tùy chỉnh gian hàng + Chính sách bán hàng (cần shop_custom.sql) */}
+              <div className="dash-table-card" style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', padding: '28px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '20px', fontWeight: 700 }}>Tùy chỉnh gian hàng</h3>
+
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '8px' }}>Màu chủ đạo (theme)</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    {['#EF4444', '#2563EB', '#16A34A', '#9333EA', '#EA580C', '#0891B2', '#DB2777', '#0F172A'].map(c => (
+                      <button key={c} type="button" onClick={() => setShopCustom({ ...shopCustom, themeColor: c })}
+                        style={{ width: '32px', height: '32px', borderRadius: '50%', background: c, border: shopCustom.themeColor.toUpperCase() === c ? '3px solid #111' : '2px solid #e5e7eb', cursor: 'pointer' }} aria-label={c} />
+                    ))}
+                    <input type="color" value={shopCustom.themeColor} onChange={e => setShopCustom({ ...shopCustom, themeColor: e.target.value })}
+                      style={{ width: '40px', height: '34px', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', background: 'white' }} />
+                    <span style={{ fontSize: '13px', color: '#6b7280', fontFamily: 'monospace' }}>{shopCustom.themeColor}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Thông báo gian hàng (banner đầu trang shop)</label>
+                  <input type="text" value={shopCustom.announcement} onChange={e => setShopCustom({ ...shopCustom, announcement: e.target.value })}
+                    placeholder="VD: 🎉 Mừng khai trương — Freeship đơn từ 99k!" className="input-base" />
+                </div>
+
+                <div style={{ height: '1px', background: '#f3f4f6' }} />
+                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', fontWeight: 700 }}>Chính sách bán hàng</h3>
+                {([
+                  { key: 'returnPolicy', label: 'Chính sách đổi trả', ph: 'VD: Đổi trả trong 7 ngày nếu lỗi do nhà sản xuất...' },
+                  { key: 'shippingPolicy', label: 'Chính sách vận chuyển', ph: 'VD: Giao hàng toàn quốc 2-4 ngày, freeship đơn từ 299k...' },
+                  { key: 'warrantyPolicy', label: 'Chính sách bảo hành', ph: 'VD: Bảo hành 12 tháng, 1 đổi 1 trong 30 ngày đầu...' },
+                ] as const).map(f => (
+                  <div key={f.key}>
+                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>{f.label}</label>
+                    <textarea value={shopCustom[f.key]} onChange={e => setShopCustom({ ...shopCustom, [f.key]: e.target.value })}
+                      placeholder={f.ph} style={{ width: '100%', padding: '12px 16px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', fontFamily: 'Inter', resize: 'vertical', minHeight: '70px', outline: 'none' }} />
+                  </div>
+                ))}
+
+                <button onClick={handleSaveShop} disabled={savingShop} className="btn-primary" style={{ alignSelf: 'flex-start', borderRadius: '10px', opacity: savingShop ? 0.7 : 1 }}>
+                  <span>{savingShop ? 'Đang lưu...' : 'Lưu tùy chỉnh & chính sách'}</span>
+                </button>
+                <p style={{ fontSize: '12px', color: '#9ca3af' }}>Cần chạy migration <code>supabase/shop_custom.sql</code> để lưu được các mục này.</p>
               </div>
             </div>
           )}

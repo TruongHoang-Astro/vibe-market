@@ -32,6 +32,7 @@ export interface Database {
           avatar_url: string | null;
           role: UserRole;
           phone: string | null;
+          status: string;
           created_at: string;
         };
         Insert: {
@@ -40,6 +41,7 @@ export interface Database {
           avatar_url?: string | null;
           role?: UserRole;
           phone?: string | null;
+          status?: string;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
@@ -79,6 +81,11 @@ export interface Database {
           description: string;
           category: string;
           verified: boolean;
+          theme_color: string;
+          announcement: string;
+          return_policy: string;
+          shipping_policy: string;
+          warranty_policy: string;
           created_at: string;
         };
         Insert: {
@@ -96,6 +103,11 @@ export interface Database {
           description?: string;
           category: string;
           verified?: boolean;
+          theme_color?: string;
+          announcement?: string;
+          return_policy?: string;
+          shipping_policy?: string;
+          warranty_policy?: string;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['shops']['Insert']>;
@@ -333,6 +345,30 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['notifications']['Insert']>;
+        Relationships: [];
+      };
+      reports: {
+        Row: {
+          id: string;
+          reporter_id: string | null;
+          target_type: string;
+          target_id: string;
+          target_label: string;
+          reason: string;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          reporter_id?: string | null;
+          target_type: string;
+          target_id: string;
+          target_label?: string;
+          reason?: string;
+          status?: string;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['reports']['Insert']>;
         Relationships: [];
       };
     };

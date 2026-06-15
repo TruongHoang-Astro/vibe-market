@@ -208,6 +208,51 @@
 
 ---
 
+## 🚀 GIAI ĐOẠN SCALE (16/06/2026) — code xong, chờ chạy migration
+
+> 4 hạng mục Scale đã code xong + **build xanh 18 routes** + smoke test runtime OK
+> (search fallback ilike chạy đúng, admin gate chặn đúng, product detail + report render).
+> Tất cả **resilient**: code không vỡ nếu chưa chạy migration (tự fallback).
+
+### ⚠️ Migration cần chạy (Supabase → SQL Editor → Run), theo thứ tự:
+1. `supabase/search.sql` — full-text (unaccent + tsvector + GIN). Chưa chạy → tìm kiếm tự fallback ilike.
+2. `supabase/shop_custom.sql` — cột theme/announcement + 3 chính sách cho shops.
+3. `supabase/admin.sql` — `profiles.status`, `is_admin()`, bảng `reports`, RLS admin.
+   **Sau đó cấp quyền admin:** `update public.profiles set role='admin' where id='<uuid>';`
+
+### 1) Search + Advanced filter (full-text)
+- `search.sql`: cột `search_vector` (generated, unaccent) + GIN index.
+- `lib/supabase/queries.ts` → `searchProducts(q, opts)`: `.textSearch('search_vector', 'q:*', {config:'simple'})`,
+  bỏ dấu tiếng Việt + prefix; **fallback ilike** nếu chưa chạy migration. Hỗ trợ lọc category/giá/rating/sort.
+- `app/products/page.tsx`: có `?search=` → server full-text; bộ lọc nâng cao client giữ nguyên
+  (ô tìm trong trang thành "lọc trong kết quả"). `searchTerm` truyền xuống ProductsClient.
+- `app/actions/search.ts` → `searchSuggestions(q)`; Navbar có **autocomplete** (debounce 250ms,
+  ảnh+tên+giá, "Xem tất cả kết quả").
+
+### 2) Seller policies + Shop customization
+- `shop_custom.sql`: `theme_color`, `announcement`, `return_policy`, `shipping_policy`, `warranty_policy`.
+- `app/actions/seller.ts` `updateShop` + `ShopInput` nhận thêm 5 cột (chỉ patch khi !== undefined).
+- Seller dashboard → tab Cài đặt: card "Tùy chỉnh gian hàng" (8 swatch + color picker + announcement)
+  + card "Chính sách bán hàng" (3 textarea). `lib/data/mock-data.ts` Shop thêm field optional; `mapShop` map (resilient).
+- `app/shop/ShopClient.tsx`: banner announcement (màu theme), tab/nút Follow theo theme, tab Thông tin có card Chính sách.
+
+### 3) Moderation + Admin real data
+- `app/actions/admin.ts`: `requireAdmin()` (chặn non-admin) + `getAdminDashboard()` (1 lần nạp:
+  overview KPI thật, users/shops/products/orders/reports). Kiểm duyệt: `setUserStatus` (khóa/mở),
+  `setUserRole`, `setShopVerified` (duyệt/gỡ + báo chủ shop), `deleteShop`, `adminDeleteProduct`,
+  `adminDeleteReview`, `resolveReport`.
+- `app/admin/dashboard/page.tsx` → Server Component gate (Denied nếu unauth/forbidden) → `AdminDashboardClient.tsx`
+  (UI cũ rewired dữ liệu thật + nút kiểm duyệt + tab **Kiểm duyệt** = hàng đợi reports). KPI/charts/GMV theo danh mục đều thật.
+- `app/actions/report.ts` + nút "Báo cáo" ở trang sản phẩm → đẩy vào hàng đợi admin.
+
+### 4) Notifications (email/SMS)
+- `lib/notify.ts`: `sendEmail` (Resend HTTP), `sendSms` (Twilio HTTP), `createNotification(admin, n)`
+  = in-app + email/SMS best-effort. **No-op nếu chưa cấu hình env** (RESEND_API_KEY/TWILIO_*).
+- `orders.ts` + `seller.ts` chuyển sang `createNotification` (đơn mới / đổi trạng thái → email tự động).
+- `.env.example`: thêm `NEXT_PUBLIC_SITE_URL`, `RESEND_API_KEY`, `NOTIFY_EMAIL_FROM`, `TWILIO_*` (tất cả tuỳ chọn).
+
+---
+
 ## Lộ trình đề xuất
 
 ```

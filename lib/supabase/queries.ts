@@ -76,6 +76,12 @@ function mapShop(row: Record<string, unknown>): Shop {
     description: row.description as string,
     category: row.category as string,
     verified: row.verified as boolean,
+    // Cột tùy chỉnh/chính sách — chỉ có sau khi chạy shop_custom.sql (resilient)
+    themeColor: (row.theme_color as string) || undefined,
+    announcement: (row.announcement as string) || undefined,
+    returnPolicy: (row.return_policy as string) || undefined,
+    shippingPolicy: (row.shipping_policy as string) || undefined,
+    warrantyPolicy: (row.warranty_policy as string) || undefined,
   };
 }
 
@@ -172,6 +178,71 @@ export const getRelatedProducts = cache(
     return (data as unknown as ProductRow[]).map(mapProduct);
   },
 );
+
+// ---------- Full-text search ----------
+// Bỏ dấu tiếng Việt để khớp cột search_vector (build bằng unaccent).
+function deaccentVi(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+}
+
+// "áo thun" → "ao & thun:*" (prefix ở token cuối cho gợi ý gõ dở).
+function toTsPrefixQuery(q: string): string {
+  const tokens = deaccentVi(q)
+    .toLowerCase()
+    .split(/\s+/)
+    .map((t) => t.replace(/[^a-z0-9]/g, ''))
+    .filter(Boolean);
+  if (!tokens.length) return '';
+  return tokens.map((t, i) => (i === tokens.length - 1 ? `${t}:*` : t)).join(' & ');
+}
+
+export interface SearchOptions {
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  sort?: 'popular' | 'newest' | 'price-asc' | 'price-desc' | 'rating';
+  limit?: number;
+}
+
+export async function searchProducts(query: string, opts: SearchOptions = {}): Promise<Product[]> {
+  const supabase = await createClient();
+  const limit = opts.limit ?? 60;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const applyFilters = (qb: any) => {
+    if (opts.category && opts.category !== 'Tất cả') qb = qb.eq('category', opts.category);
+    if (opts.minPrice != null) qb = qb.gte('price', opts.minPrice);
+    if (opts.maxPrice != null && Number.isFinite(opts.maxPrice)) qb = qb.lte('price', opts.maxPrice);
+    if (opts.minRating != null) qb = qb.gte('rating', opts.minRating);
+    switch (opts.sort) {
+      case 'price-asc': qb = qb.order('price', { ascending: true }); break;
+      case 'price-desc': qb = qb.order('price', { ascending: false }); break;
+      case 'rating': qb = qb.order('rating', { ascending: false }); break;
+      case 'newest': qb = qb.order('created_at', { ascending: false }); break;
+      default: qb = qb.order('sold', { ascending: false });
+    }
+    return qb.limit(limit);
+  };
+
+  // 1) Full-text (cần search.sql đã chạy)
+  const tsq = toTsPrefixQuery(query);
+  if (tsq) {
+    const base = supabase.from('products').select(PRODUCT_SELECT)
+      .textSearch('search_vector', tsq, { config: 'simple' });
+    const { data, error } = await applyFilters(base);
+    if (!error) return (data as unknown as ProductRow[]).map(mapProduct);
+    console.error('searchProducts (fts → fallback ilike):', error.message);
+  }
+
+  // 2) Fallback ilike (không cần migration; an toàn nếu cột chưa tồn tại)
+  const base = supabase.from('products').select(PRODUCT_SELECT);
+  const term = query.replace(/[,%()]/g, ' ').trim();
+  const qb = term ? base.or(`name.ilike.%${term}%,description.ilike.%${term}%`) : base;
+  const { data, error } = await applyFilters(qb);
+  if (error) { console.error('searchProducts (ilike):', error.message); return []; }
+  return (data as unknown as ProductRow[]).map(mapProduct);
+}
 
 // ---------- Categories ----------
 export const getCategories = cache(async (): Promise<Category[]> => {

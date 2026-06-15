@@ -14,7 +14,8 @@ import { useCartStore } from '@/lib/store/cart-store';
 import { useWishlistStore } from '@/lib/store/wishlist-store';
 import { useUser, signOutUser } from '@/lib/supabase/use-user';
 import { createClient } from '@/lib/supabase/client';
-import { categories, formatCount } from '@/lib/data/mock-data';
+import { categories, formatCount, formatPrice } from '@/lib/data/mock-data';
+import { searchSuggestions, type Suggestion } from '@/app/actions/search';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -24,6 +25,8 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [loadingSug, setLoadingSug] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [catMenuOpen, setCatMenuOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -65,6 +68,26 @@ export default function Navbar() {
   useEffect(() => {
     if (searchOpen) searchRef.current?.focus();
   }, [searchOpen]);
+
+  // Gợi ý sản phẩm (debounce) — full-text phía server
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) { setSuggestions([]); setLoadingSug(false); return; }
+    setLoadingSug(true);
+    const t = setTimeout(async () => {
+      try { setSuggestions(await searchSuggestions(q)); }
+      catch { setSuggestions([]); }
+      finally { setLoadingSug(false); }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  const goProduct = (id: string) => {
+    setSearchOpen(false);
+    setMobileOpen(false);
+    setSearchQuery('');
+    router.push(`/products/${id}`);
+  };
 
   const goSearch = (query: string) => {
     const q = query.trim();
@@ -204,7 +227,7 @@ export default function Navbar() {
               </button>
             </form>
             <AnimatePresence>
-              {searchOpen && searchQuery.length > 0 && (
+              {searchOpen && searchQuery.trim().length >= 2 && (
                 <motion.div
                   initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }}
                   style={{
@@ -213,15 +236,36 @@ export default function Navbar() {
                     border: '1px solid var(--gray-100)', padding: '8px', zIndex: 100,
                   }}
                 >
-                  <div style={{ padding: '8px 12px', fontSize: '12px', color: 'var(--gray-400)', fontWeight: 600 }}>GỢI Ý TÌM KIẾM</div>
-                  {['Áo khoác', 'Giày sneaker', 'Tai nghe bluetooth', 'Son môi'].slice(0, 4).map(s => (
-                    <div key={s} onMouseDown={() => goSearch(s)} style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  <div style={{ padding: '8px 12px', fontSize: '12px', color: 'var(--gray-400)', fontWeight: 600 }}>GỢI Ý SẢN PHẨM</div>
+                  {loadingSug && suggestions.length === 0 && (
+                    <div style={{ padding: '12px', fontSize: '13px', color: 'var(--gray-400)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Search size={14} /> Đang tìm…
+                    </div>
+                  )}
+                  {!loadingSug && suggestions.length === 0 && (
+                    <div style={{ padding: '12px', fontSize: '13px', color: 'var(--gray-400)' }}>Không có gợi ý. Nhấn “Tìm” để xem tất cả.</div>
+                  )}
+                  {suggestions.map(s => (
+                    <div key={s.id} onMouseDown={() => goProduct(s.id)}
+                      style={{ padding: '8px 12px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}
                       onMouseEnter={e => (e.currentTarget.style.background = 'var(--gray-50)')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <Search size={14} style={{ color: 'var(--gray-400)' }} /> {s}
+                      <img src={s.image} alt="" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0, background: 'var(--gray-100)' }} />
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div className="line-clamp-1" style={{ fontSize: '14px', fontWeight: 500, color: 'var(--gray-800)' }}>{s.name}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--gray-400)' }}>{s.shopName}</div>
+                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--primary)', flexShrink: 0 }}>{formatPrice(s.price)}</div>
                     </div>
                   ))}
+                  <div onMouseDown={() => goSearch(searchQuery)}
+                    style={{ marginTop: '4px', padding: '10px 12px', borderTop: '1px solid var(--gray-100)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--gray-50)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <Search size={14} /> Xem tất cả kết quả cho “{searchQuery.trim()}”
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

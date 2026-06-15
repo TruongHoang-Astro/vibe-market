@@ -15,9 +15,22 @@ export default function ShopClient({ shop, shopProducts }: { shop: Shop; shopPro
   const { openChat } = useChatStore();
 
   const handleChat = () => openChat(shop.id, shop.name, shop.logo);
+  const theme = shop.themeColor || 'var(--primary)';
+  const policies = [
+    { label: 'Đổi trả', value: shop.returnPolicy },
+    { label: 'Vận chuyển', value: shop.shippingPolicy },
+    { label: 'Bảo hành', value: shop.warrantyPolicy },
+  ].filter(p => p.value && p.value.trim());
 
   return (
     <div style={{ minHeight: '80vh' }}>
+      {/* Thông báo gian hàng (tùy chỉnh) */}
+      {shop.announcement && (
+        <div style={{ background: theme, color: 'white', fontSize: '14px', fontWeight: 600, textAlign: 'center', padding: '10px 16px' }}>
+          {shop.announcement}
+        </div>
+      )}
+
       {/* Shop banner */}
       <div style={{ position: 'relative', height: '220px', overflow: 'hidden', background: 'linear-gradient(135deg, #0a0a0a, #1a0000)' }}>
         {shop.banner && <img src={shop.banner} alt={shop.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
@@ -57,7 +70,7 @@ export default function ShopClient({ shop, shopProducts }: { shop: Shop; shopPro
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <motion.button whileHover={{ scale: 1.04 }} onClick={() => setFollowed(!followed)}
                   className={followed ? 'btn-outline' : 'btn-primary'}
-                  style={{ borderRadius: '10px', padding: '10px 24px', fontSize: '14px' }}>
+                  style={{ borderRadius: '10px', padding: '10px 24px', fontSize: '14px', ...(followed ? {} : { background: theme, borderColor: theme }) }}>
                   {followed ? (
                     <><Heart size={16} fill="var(--primary)" color="var(--primary)" /> <span>Đang theo dõi</span></>
                   ) : (
@@ -104,7 +117,7 @@ export default function ShopClient({ shop, shopProducts }: { shop: Shop; shopPro
           <div style={{ display: 'flex', gap: '0' }}>
             {[{ key: 'products', label: `Sản phẩm (${shopProducts.length})` }, { key: 'reviews', label: 'Đánh giá' }, { key: 'info', label: 'Thông tin shop' }].map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key as typeof activeTab)}
-                style={{ padding: '16px 24px', border: 'none', background: 'transparent', fontWeight: activeTab === tab.key ? 700 : 400, color: activeTab === tab.key ? 'var(--primary)' : 'var(--gray-600)', fontSize: '15px', cursor: 'pointer', borderBottom: `3px solid ${activeTab === tab.key ? 'var(--primary)' : 'transparent'}`, transition: 'all 0.2s' }}>
+                style={{ padding: '16px 24px', border: 'none', background: 'transparent', fontWeight: activeTab === tab.key ? 700 : 400, color: activeTab === tab.key ? theme : 'var(--gray-600)', fontSize: '15px', cursor: 'pointer', borderBottom: `3px solid ${activeTab === tab.key ? theme : 'transparent'}`, transition: 'all 0.2s' }}>
                 {tab.label}
               </button>
             ))}
@@ -194,6 +207,19 @@ export default function ShopClient({ shop, shopProducts }: { shop: Shop; shopPro
 
         {activeTab === 'info' && (
           <div style={{ maxWidth: '640px' }}>
+            {policies.length > 0 && (
+              <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', padding: '28px', marginBottom: '20px' }}>
+                <h3 style={{ fontFamily: 'Playfair Display', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Chính Sách Bán Hàng</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {policies.map((p, i) => (
+                    <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                      <span style={{ flexShrink: 0, fontSize: '12px', fontWeight: 700, color: 'white', background: theme, padding: '4px 10px', borderRadius: '99px', marginTop: '2px' }}>{p.label}</span>
+                      <p style={{ fontSize: '14px', color: 'var(--gray-600)', lineHeight: 1.7, whiteSpace: 'pre-line' }}>{p.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', padding: '28px' }}>
               <h3 style={{ fontFamily: 'Playfair Display', fontSize: '20px', fontWeight: 700, marginBottom: '16px' }}>Giới Thiệu Shop</h3>
               <p style={{ color: 'var(--gray-600)', lineHeight: 1.8, marginBottom: '24px' }}>{shop.description}</p>

@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import {
   Star, Heart, Share2, ShoppingCart, Zap, Shield,
   Truck, RotateCcw, ChevronRight, Plus, Minus, Store, CheckCircle2,
-  ChevronLeft, ChevronDown, MessageCircle, ShieldCheck, Ruler, Camera, X,
+  ChevronLeft, ChevronDown, MessageCircle, ShieldCheck, Ruler, Camera, X, Flag,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPrice, formatNumber } from '@/lib/data/mock-data';
@@ -17,6 +17,7 @@ import { useChatStore } from '@/lib/store/chat-store';
 import { useUser } from '@/lib/supabase/use-user';
 import { createClient } from '@/lib/supabase/client';
 import { uploadChatMedia } from '@/app/actions/chat';
+import { reportContent } from '@/app/actions/report';
 
 interface ShopInfo { name: string; logo: string; rating: number; products: number; response_rate: number; verified: boolean }
 
@@ -349,12 +350,24 @@ export default function ProductDetailClient({
 
         {/* Reviews */}
         <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', padding: '20px', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
-            <span style={{ fontSize: '34px', fontWeight: 800, color: 'var(--primary)', lineHeight: 1 }}>{product.rating}</span>
-            <div>
-              <div style={{ display: 'flex', gap: '2px', marginBottom: '4px' }}>{[1, 2, 3, 4, 5].map(s => <Star key={s} size={16} fill={s <= Math.round(product.rating) ? '#f59e0b' : '#e5e5e5'} color={s <= Math.round(product.rating) ? '#f59e0b' : '#e5e5e5'} />)}</div>
-              <span style={{ fontSize: '13px', color: 'var(--gray-500)' }}>Đánh giá sản phẩm ({formatNumber(product.reviews)})</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <span style={{ fontSize: '34px', fontWeight: 800, color: 'var(--primary)', lineHeight: 1 }}>{product.rating}</span>
+              <div>
+                <div style={{ display: 'flex', gap: '2px', marginBottom: '4px' }}>{[1, 2, 3, 4, 5].map(s => <Star key={s} size={16} fill={s <= Math.round(product.rating) ? '#f59e0b' : '#e5e5e5'} color={s <= Math.round(product.rating) ? '#f59e0b' : '#e5e5e5'} />)}</div>
+                <span style={{ fontSize: '13px', color: 'var(--gray-500)' }}>Đánh giá sản phẩm ({formatNumber(product.reviews)})</span>
+              </div>
             </div>
+            <button onClick={async () => {
+              if (!user) { toast.error('Bạn cần đăng nhập để báo cáo'); return; }
+              const reason = window.prompt('Lý do báo cáo sản phẩm này? (vd: hàng giả, nội dung phản cảm...)');
+              if (reason == null || !reason.trim()) return;
+              const res = await reportContent({ targetType: 'product', targetId: product.id, targetLabel: product.name, reason });
+              if (res.error) toast.error(res.error); else toast.success('Đã gửi báo cáo tới quản trị viên. Cảm ơn bạn!');
+            }} title="Báo cáo sản phẩm"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: '1px solid var(--gray-200)', borderRadius: '8px', padding: '7px 12px', cursor: 'pointer', color: 'var(--gray-500)', fontSize: '13px', fontWeight: 600, flexShrink: 0 }}>
+              <Flag size={14} /> Báo cáo
+            </button>
           </div>
 
           {/* Review form */}
