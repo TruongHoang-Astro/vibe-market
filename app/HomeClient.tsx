@@ -9,6 +9,7 @@ import {
 import { formatPrice, formatNumber, formatCount } from '@/lib/data/mock-data';
 import type { Product, Category, Review } from '@/lib/data/mock-data';
 import { useCartStore } from '@/lib/store/cart-store';
+import PersonalizedRows from '@/components/product/PersonalizedRows';
 
 // --- Hero Banner ---
 const heroSlides = [
@@ -504,6 +505,7 @@ export default function HomeClient({
       <FlashSaleSection flashSaleProducts={flashSaleProducts} />
       <CategoryGrid categories={categories} />
       <FeaturedProducts products={products} />
+      <PersonalizedRows />
       <SellerCTA />
       <Testimonials reviews={reviews} />
     </>

@@ -346,6 +346,12 @@
 - `getMyOrders` gắn `tracking[]` (resilient). `/orders`: nút **"Theo dõi đơn hàng"** mở timeline (chấm tròn + nhãn trạng thái + mốc thời gian).
 - Build xanh 19 routes.
 
+### 14) NEXT-4: "Đã xem gần đây" + gợi ý "Dành cho bạn" (16/06/2026)
+- `lib/recently-viewed.ts` (localStorage, max 12). ProductDetailClient ghi nhận khi xem.
+- DAL `getProductsByIds` (giữ thứ tự) + `getRecommendations` (ưu tiên danh mục đã xem, fallback phổ biến); action `app/actions/recommend.ts`.
+- `components/product/PersonalizedRows.tsx` (2 hàng cuộn ngang) mount ở HomeClient.
+- Build xanh 19 routes; smoke test home hiện 2 hàng (recs từ DB, không cần migration), không lỗi.
+
 ---
 
 ## Lộ trình đề xuất

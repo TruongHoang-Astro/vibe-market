@@ -20,6 +20,7 @@ import { uploadChatMedia } from '@/app/actions/chat';
 import { reportContent } from '@/app/actions/report';
 import { askQuestion, answerQuestion } from '@/app/actions/qa';
 import type { ProductQuestion } from '@/lib/supabase/queries';
+import { addRecentlyViewed } from '@/lib/recently-viewed';
 
 interface ShopInfo { name: string; logo: string; rating: number; products: number; response_rate: number; verified: boolean }
 
@@ -46,6 +47,8 @@ export default function ProductDetailClient({
   const { user, profile } = useUser();
   const router = useRouter();
   const wished = isWished(product.id);
+
+  useEffect(() => { addRecentlyViewed(product.id); }, [product.id]);
 
   useEffect(() => {
     createClient().from('shops').select('name, logo, rating, products, response_rate, verified').eq('id', product.shopId).maybeSingle()

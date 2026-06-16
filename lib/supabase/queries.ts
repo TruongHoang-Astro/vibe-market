@@ -176,6 +176,32 @@ export const getProductsByShop = cache(async (shopId: string): Promise<Product[]
   return (data as unknown as ProductRow[]).map(mapProduct);
 });
 
+// Sản phẩm theo danh sách id (giữ đúng thứ tự input) — cho "Đã xem gần đây".
+export const getProductsByIds = cache(async (ids: string[]): Promise<Product[]> => {
+  if (!ids.length) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('products').select(PRODUCT_SELECT).in('id', ids);
+  if (error) { console.error('getProductsByIds:', error.message); return []; }
+  const products = (data as unknown as ProductRow[]).map(mapProduct);
+  const order = new Map(ids.map((id, i) => [id, i]));
+  return products.sort((a, b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99));
+});
+
+// Gợi ý "Dành cho bạn": ưu tiên danh mục đã xem; nếu chưa xem gì → phổ biến nhất.
+export const getRecommendations = cache(async (viewedIds: string[], limit = 8): Promise<Product[]> => {
+  const supabase = await createClient();
+  let query = supabase.from('products').select(PRODUCT_SELECT).order('sold', { ascending: false });
+  if (viewedIds.length) {
+    const { data: cats } = await supabase.from('products').select('category').in('id', viewedIds);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const categories = [...new Set((cats ?? []).map((c: any) => c.category))];
+    if (categories.length) query = query.in('category', categories);
+  }
+  const { data, error } = await query.limit(limit + viewedIds.length);
+  if (error) { console.error('getRecommendations:', error.message); return []; }
+  return (data as unknown as ProductRow[]).map(mapProduct).filter((p) => !viewedIds.includes(p.id)).slice(0, limit);
+});
+
 export const getRelatedProducts = cache(
   async (category: string, excludeId: string, limit = 4): Promise<Product[]> => {
     const supabase = await createClient();
