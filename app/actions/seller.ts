@@ -18,6 +18,8 @@ export interface ProductInput {
   image: string;
   sizeGuide?: { size: string; value: string }[];  // bảng hướng dẫn chọn size
   variants?: { name: string; price: number; stock: number }[]; // phân loại hàng
+  flashSale?: boolean;       // bật Flash Sale
+  flashSaleEnd?: string;     // thời điểm kết thúc (ISO/datetime-local)
 }
 
 function cleanVariants(v?: { name: string; price: number; stock: number }[]) {
@@ -76,6 +78,9 @@ export async function createProduct(input: ProductInput): Promise<{ ok?: true; e
     stock: finalStock,
     description: input.description || '',
     badge: finalBadge,
+    is_flash_sale: !!input.flashSale,
+    ...(input.flashSale ? { flash_sale_price: finalPrice } : {}),
+    ...(input.flashSale && input.flashSaleEnd ? { flash_sale_end: new Date(input.flashSaleEnd).toISOString() } : {}),
     ...(cleanGuide(input.sizeGuide).length ? { size_guide: cleanGuide(input.sizeGuide) } : {}),
   });
   if (error) { console.error('createProduct:', error.message); return { error: 'Đăng sản phẩm thất bại' }; }
@@ -111,6 +116,9 @@ export async function updateProduct(id: string, input: ProductInput): Promise<{ 
   const guide = cleanGuide(input.sizeGuide);
   if (guide.length) patch.size_guide = guide;
   if (input.image) { patch.image = input.image; patch.images = [input.image]; }
+  patch.is_flash_sale = !!input.flashSale;
+  patch.flash_sale_price = input.flashSale ? finalPrice : null;
+  if (input.flashSale && input.flashSaleEnd) patch.flash_sale_end = new Date(input.flashSaleEnd).toISOString();
 
   // .eq shop_id để chắc chắn chỉ sửa SP của shop mình (RLS cũng chặn)
   const { error } = await supabase.from('products').update(patch).eq('id', id).eq('shop_id', shop.id);

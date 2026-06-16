@@ -134,6 +134,7 @@ export interface Database {
           sizes: string[] | null;
           is_flash_sale: boolean;
           flash_sale_price: number | null;
+          flash_sale_end: string | null;
           size_guide: Json;
           created_at: string;
         };
@@ -157,6 +158,7 @@ export interface Database {
           sizes?: string[] | null;
           is_flash_sale?: boolean;
           flash_sale_price?: number | null;
+          flash_sale_end?: string | null;
           size_guide?: Json;
           created_at?: string;
         };

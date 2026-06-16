@@ -150,7 +150,16 @@ export const getFlashSaleProducts = cache(async (): Promise<Product[]> => {
     console.error('getFlashSaleProducts:', error.message);
     return [];
   }
-  return (data as unknown as ProductRow[]).map(mapProduct);
+  const products = (data as unknown as ProductRow[]).map(mapProduct);
+  // Gắn flash_sale_end (cột mới — nếu chưa chạy flashsale.sql thì bỏ qua)
+  const ids = products.map((p) => p.id);
+  if (ids.length) {
+    const { data: ends } = await supabase.from('products').select('id, flash_sale_end').in('id', ids);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const map = new Map((ends ?? []).map((e: any) => [e.id as string, e.flash_sale_end as string | null]));
+    for (const p of products) { const e = map.get(p.id); if (e) p.flashSaleEnd = e; }
+  }
+  return products;
 });
 
 export const getProductsByShop = cache(async (shopId: string): Promise<Product[]> => {

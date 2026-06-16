@@ -60,8 +60,17 @@ function mapRow(r: any) {
     stock: r.stock as number, sold: r.sold as number, rating: Number(r.rating),
     description: (r.description ?? '') as string,
     sizeGuide: (Array.isArray(r.size_guide) ? r.size_guide : []) as { size: string; value: string }[],
+    isFlashSale: !!r.is_flash_sale,
+    flashSaleEnd: (r.flash_sale_end ?? '') as string,
   };
 }
+
+const toLocalDatetime = (iso: string) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 
 const fallbackLogo = (name: string) =>
   `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'Shop')}&background=ef4444&color=fff&bold=true`;
@@ -93,6 +102,8 @@ export default function SellerDashboard() {
   const [productImage, setProductImage] = useState('');
   const [sizeGuide, setSizeGuide] = useState<{ size: string; value: string }[]>([]);
   const [variants, setVariants] = useState<{ name: string; price: string; stock: string }[]>([]);
+  const [flashSale, setFlashSale] = useState(false);
+  const [flashEnd, setFlashEnd] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -150,7 +161,7 @@ export default function SellerDashboard() {
 
   const resetForm = () => {
     setProductForm({ name: '', category: '', price: '', salePrice: '', stock: '', description: '' });
-    setProductImage(''); setSizeGuide([]); setVariants([]); setEditingId(null);
+    setProductImage(''); setSizeGuide([]); setVariants([]); setFlashSale(false); setFlashEnd(''); setEditingId(null);
   };
   const openAdd = () => { resetForm(); setShowAddProduct(true); };
   const openEdit = async (p: ReturnType<typeof mapRow>) => {
@@ -167,6 +178,7 @@ export default function SellerDashboard() {
     const { data: vrs } = await createClient().from('product_variants').select('name, price, stock').eq('product_id', p.id).order('created_at');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setVariants(((vrs ?? []) as any[]).map((v) => ({ name: v.name, price: String(v.price), stock: String(v.stock) })));
+    setFlashSale(p.isFlashSale); setFlashEnd(toLocalDatetime(p.flashSaleEnd));
     setShowAddProduct(true);
   };
 
@@ -195,6 +207,7 @@ export default function SellerDashboard() {
       stock: Number(productForm.stock || 0),
       description: productForm.description, image: productImage, sizeGuide,
       variants: variants.map((v) => ({ name: v.name, price: Number(v.price || 0), stock: Number(v.stock || 0) })),
+      flashSale, flashSaleEnd: flashEnd,
     };
     const res = editingId ? await updateProduct(editingId, input) : await createProduct(input);
     setSubmitting(false);
@@ -845,6 +858,21 @@ export default function SellerDashboard() {
                     </div>
                     {variants.length > 0 && (
                       <p style={{ fontSize: '12px', color: '#d97706', marginTop: '6px' }}>Khi có phân loại: giá hiển thị = thấp nhất, tồn kho = tổng (ô Giá gốc/Tồn kho phía trên sẽ bị ghi đè).</p>
+                    )}
+                  </div>
+
+                  {/* Flash Sale */}
+                  <div style={{ border: '1.5px solid #fed7aa', borderRadius: '12px', padding: '16px', background: '#fff7ed' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: 700, fontSize: '14px', color: '#c2410c' }}>
+                      <input type="checkbox" checked={flashSale} onChange={e => setFlashSale(e.target.checked)} />
+                      🔥 Đặt làm Flash Sale
+                    </label>
+                    {flashSale && (
+                      <div style={{ marginTop: '12px' }}>
+                        <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Thời điểm kết thúc</label>
+                        <input type="datetime-local" value={flashEnd} onChange={e => setFlashEnd(e.target.value)} className="input-base" />
+                        <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px' }}>Giá Flash = giá khuyến mãi đang nhập. Trang chủ hiện đếm ngược tới mốc này. (Cần chạy variants/flashsale.sql)</p>
+                      </div>
                     )}
                   </div>
 

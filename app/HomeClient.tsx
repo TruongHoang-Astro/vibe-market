@@ -147,25 +147,23 @@ function HeroBanner() {
   );
 }
 
-// --- Flash Sale Timer ---
+// --- Flash Sale Timer (đếm ngược thật tới flash_sale_end gần nhất) ---
 function FlashSaleSection({ flashSaleProducts }: { flashSaleProducts: Product[] }) {
-  const [time, setTime] = useState({ h: 5, m: 32, s: 14 });
   const ref = useRef(null);
   const inView = useInView(ref, { once: true });
 
+  const target = (() => {
+    const ends = flashSaleProducts.map(p => (p.flashSaleEnd ? new Date(p.flashSaleEnd).getTime() : 0)).filter(t => t > Date.now());
+    return ends.length ? Math.min(...ends) : 0;
+  })();
+  const [remaining, setRemaining] = useState(target ? Math.max(0, target - Date.now()) : 0);
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(t => {
-        let { h, m, s } = t;
-        s--;
-        if (s < 0) { s = 59; m--; }
-        if (m < 0) { m = 59; h--; }
-        if (h < 0) { h = 5; m = 59; s = 59; }
-        return { h, m, s };
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    if (!target) return;
+    const id = setInterval(() => setRemaining(Math.max(0, target - Date.now())), 1000);
+    return () => clearInterval(id);
+  }, [target]);
+  const time = { h: Math.floor(remaining / 3600000), m: Math.floor((remaining % 3600000) / 60000), s: Math.floor((remaining % 60000) / 1000) };
+  const ended = target > 0 && remaining <= 0;
 
   const { addItem, openCart } = useCartStore();
 
@@ -180,14 +178,21 @@ function FlashSaleSection({ flashSaleProducts }: { flashSaleProducts: Product[] 
                 <Flame size={28} style={{ color: '#f97316' }} />
                 <h2 style={{ fontFamily: 'Playfair Display', fontSize: '28px', fontWeight: 800, color: 'var(--black)' }}>Flash Sale</h2>
               </div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                {[String(time.h).padStart(2, '0'), String(time.m).padStart(2, '0'), String(time.s).padStart(2, '0')].map((val, i) => (
-                  <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ background: 'var(--primary)', color: 'white', fontWeight: 800, fontSize: '20px', padding: '6px 10px', borderRadius: '8px', minWidth: '44px', textAlign: 'center', fontFamily: 'monospace' }}>{val}</span>
-                    {i < 2 && <span style={{ color: 'var(--primary)', fontWeight: 900, fontSize: '20px' }}>:</span>}
-                  </span>
-                ))}
-              </div>
+              {target === 0 ? (
+                <span style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--primary)', fontWeight: 700, fontSize: '14px', padding: '6px 14px', borderRadius: '99px' }}>🔥 Đang diễn ra</span>
+              ) : ended ? (
+                <span style={{ background: 'var(--gray-100)', color: 'var(--gray-500)', fontWeight: 700, fontSize: '14px', padding: '6px 14px', borderRadius: '99px' }}>Đã kết thúc</span>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--gray-500)', fontWeight: 600, marginRight: '2px' }}>Kết thúc sau</span>
+                  {[String(time.h).padStart(2, '0'), String(time.m).padStart(2, '0'), String(time.s).padStart(2, '0')].map((val, i) => (
+                    <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ background: 'var(--primary)', color: 'white', fontWeight: 800, fontSize: '20px', padding: '6px 10px', borderRadius: '8px', minWidth: '44px', textAlign: 'center', fontFamily: 'monospace' }}>{val}</span>
+                      {i < 2 && <span style={{ color: 'var(--primary)', fontWeight: 900, fontSize: '20px' }}>:</span>}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <Link href="/products?flash=true" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary)', fontWeight: 600, fontSize: '14px' }}>
               Xem tất cả <ChevronRight size={16} />
@@ -218,7 +223,7 @@ function FlashSaleSection({ flashSaleProducts }: { flashSaleProducts: Product[] 
                             <span style={{ color: '#FF4500' }}>🔥 Hot</span>
                           </div>
                           <div style={{ height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '99px' }}>
-                            <div style={{ height: '100%', background: 'linear-gradient(90deg, #FF4500, #f43f5e)', borderRadius: '99px', width: `${Math.min(80, 30 + (product.sold % 50))}%` }} />
+                            <div style={{ height: '100%', background: 'linear-gradient(90deg, #FF4500, #f43f5e)', borderRadius: '99px', width: `${Math.min(99, Math.round((product.sold / Math.max(1, product.sold + product.stock)) * 100))}%` }} />
                           </div>
                         </div>
                       </div>

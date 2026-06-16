@@ -327,6 +327,13 @@
 
 **✅ NOW tier (gap Shopee ưu tiên 1) HOÀN TẤT**: hủy đơn+đánh giá+trả hàng, voucher thật, biến thể SP.
 
+### 11) NEXT-1: Flash Sale đếm ngược thật + quota (16/06/2026)
+- `supabase/flashsale.sql`: `products.flash_sale_end` (+ set 8h cho SP flash seed). Resilient (DAL gắn flash_sale_end qua query phụ).
+- Home: **đếm ngược thật** tới `flash_sale_end` gần nhất ("Kết thúc sau HH:MM:SS" / "Đang diễn ra" / "Đã kết thúc");
+  thanh **"đã bán X%"** = sold/(sold+stock) (cạn kho), bỏ công thức giả cũ.
+- Seller: modal SP thêm bật **Flash Sale** + chọn thời điểm kết thúc; createProduct/updateProduct set is_flash_sale/flash_sale_price/flash_sale_end (resilient).
+- Build xanh 19 routes; smoke test home flash hiện "Đang diễn ra" (chưa migrate) + progress bar, không lỗi.
+
 ---
 
 ## Lộ trình đề xuất
