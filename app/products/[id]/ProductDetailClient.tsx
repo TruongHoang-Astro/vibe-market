@@ -18,15 +18,19 @@ import { useUser } from '@/lib/supabase/use-user';
 import { createClient } from '@/lib/supabase/client';
 import { uploadChatMedia } from '@/app/actions/chat';
 import { reportContent } from '@/app/actions/report';
+import { askQuestion, answerQuestion } from '@/app/actions/qa';
+import type { ProductQuestion } from '@/lib/supabase/queries';
 
 interface ShopInfo { name: string; logo: string; rating: number; products: number; response_rate: number; verified: boolean }
 
 export default function ProductDetailClient({
-  product, relatedProducts, productReviews,
+  product, relatedProducts, productReviews, questions = [], isShopOwner = false,
 }: {
   product: Product;
   relatedProducts: Product[];
   productReviews: Review[];
+  questions?: ProductQuestion[];
+  isShopOwner?: boolean;
 }) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || null);
@@ -55,6 +59,36 @@ export default function ProductDetailClient({
   const [revImages, setRevImages] = useState<string[]>([]);
   const [revSubmitting, setRevSubmitting] = useState(false);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+
+  // Hỏi & Đáp
+  const [qaList, setQaList] = useState<ProductQuestion[]>(questions);
+  const [newQuestion, setNewQuestion] = useState('');
+  const [askingQ, setAskingQ] = useState(false);
+  const [answerDraft, setAnswerDraft] = useState<Record<string, string>>({});
+  const [answeringId, setAnsweringId] = useState<string | null>(null);
+
+  const submitQuestion = async () => {
+    if (!user) { toast('Đăng nhập để đặt câu hỏi nhé!'); return; }
+    if (!newQuestion.trim()) { toast.error('Vui lòng nhập câu hỏi'); return; }
+    setAskingQ(true);
+    const res = await askQuestion(product.id, newQuestion);
+    setAskingQ(false);
+    if (res.error) { toast.error(res.error); return; }
+    setQaList([{ id: 'tmp-' + Date.now(), askerName: profile?.full_name || 'Bạn', question: newQuestion.trim(), answer: null, date: new Date().toISOString() }, ...qaList]);
+    setNewQuestion('');
+    toast.success('Đã gửi câu hỏi tới shop!');
+  };
+  const submitAnswer = async (id: string) => {
+    const a = (answerDraft[id] || '').trim();
+    if (!a) { toast.error('Vui lòng nhập câu trả lời'); return; }
+    setAnsweringId(id);
+    const res = await answerQuestion(id, a);
+    setAnsweringId(null);
+    if (res.error) { toast.error(res.error); return; }
+    setQaList(qaList.map(q => q.id === id ? { ...q, answer: a } : q));
+    setAnswerDraft(prev => ({ ...prev, [id]: '' }));
+    toast.success('Đã trả lời');
+  };
 
   const handleRevImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -464,6 +498,45 @@ export default function ProductDetailClient({
                 </div>
               </div>
             ))
+          )}
+        </div>
+
+        {/* Hỏi & Đáp */}
+        <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', padding: '20px', marginBottom: '16px' }}>
+          <h2 style={{ fontFamily: 'Playfair Display', fontSize: '20px', fontWeight: 800, marginBottom: '14px' }}>Hỏi &amp; Đáp {qaList.length > 0 && <span style={{ fontSize: '14px', color: 'var(--gray-400)', fontWeight: 400 }}>({qaList.length})</span>}</h2>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '18px' }}>
+            <input value={newQuestion} onChange={e => setNewQuestion(e.target.value)} placeholder="Đặt câu hỏi cho shop về sản phẩm này..." className="input-base" style={{ flex: 1 }} onKeyDown={e => { if (e.key === 'Enter') submitQuestion(); }} />
+            <button onClick={submitQuestion} disabled={askingQ} className="btn-primary" style={{ borderRadius: '10px', padding: '0 18px', opacity: askingQ ? 0.7 : 1 }}>{askingQ ? '...' : 'Gửi'}</button>
+          </div>
+          {qaList.length === 0 ? (
+            <p style={{ color: 'var(--gray-400)', fontSize: '14px', textAlign: 'center', padding: '12px' }}>Chưa có câu hỏi nào. Hãy là người đầu tiên!</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {qaList.map(q => (
+                <div key={q.id} style={{ borderBottom: '1px solid var(--gray-100)', paddingBottom: '12px' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '13px', flexShrink: 0 }}>Hỏi</span>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '14px', color: 'var(--gray-800)' }}>{q.question}</p>
+                      <span style={{ fontSize: '12px', color: 'var(--gray-400)' }}>{q.askerName} · {new Date(q.date).toLocaleDateString('vi-VN')}</span>
+                    </div>
+                  </div>
+                  {q.answer ? (
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '8px', marginLeft: '12px', background: 'var(--gray-50)', padding: '10px 12px', borderRadius: '8px' }}>
+                      <span style={{ fontWeight: 700, color: '#16a34a', fontSize: '13px', flexShrink: 0 }}>Đáp</span>
+                      <p style={{ fontSize: '14px', color: 'var(--gray-700)' }}>{q.answer}</p>
+                    </div>
+                  ) : isShopOwner ? (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px', marginLeft: '12px' }}>
+                      <input value={answerDraft[q.id] || ''} onChange={e => setAnswerDraft(prev => ({ ...prev, [q.id]: e.target.value }))} placeholder="Trả lời câu hỏi này..." className="input-base" style={{ flex: 1 }} />
+                      <button onClick={() => submitAnswer(q.id)} disabled={answeringId === q.id} style={{ padding: '0 14px', background: '#16a34a', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>{answeringId === q.id ? '...' : 'Trả lời'}</button>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '12px', color: 'var(--gray-400)', marginTop: '6px', marginLeft: '12px' }}>Chờ shop trả lời...</p>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
 

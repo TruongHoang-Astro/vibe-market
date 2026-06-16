@@ -489,6 +489,30 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['product_variants']['Insert']>;
         Relationships: [];
       };
+      product_questions: {
+        Row: {
+          id: string;
+          product_id: string;
+          user_id: string | null;
+          asker_name: string;
+          question: string;
+          answer: string | null;
+          answered_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          user_id?: string | null;
+          asker_name?: string;
+          question: string;
+          answer?: string | null;
+          answered_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['product_questions']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };

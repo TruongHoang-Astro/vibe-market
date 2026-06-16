@@ -334,6 +334,13 @@
 - Seller: modal SP thêm bật **Flash Sale** + chọn thời điểm kết thúc; createProduct/updateProduct set is_flash_sale/flash_sale_price/flash_sale_end (resilient).
 - Build xanh 19 routes; smoke test home flash hiện "Đang diễn ra" (chưa migrate) + progress bar, không lỗi.
 
+### 12) NEXT-2: Hỏi & Đáp sản phẩm (16/06/2026)
+- `supabase/qa.sql`: bảng `product_questions` (question/answer/answered_at) + RLS (đọc công khai, đặt câu hỏi own; seller trả lời qua server action).
+- `app/actions/qa.ts`: `askQuestion` (buyer, notify shop) + `answerQuestion` (verify chủ shop, notify người hỏi).
+- `getProductQuestions` (DAL, resilient → [] nếu chưa migrate). Trang SP có mục **Hỏi & Đáp**: ô đặt câu hỏi + list;
+  chủ shop thấy ô **Trả lời** ngay dưới câu chưa đáp (page tính `isShopOwner`).
+- Build xanh 19 routes; smoke test SP hiện mục Hỏi & Đáp + empty state (chưa migrate → log resilient, không vỡ).
+
 ---
 
 ## Lộ trình đề xuất

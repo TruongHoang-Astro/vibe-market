@@ -258,6 +258,26 @@ export async function searchProducts(query: string, opts: SearchOptions = {}): P
   return (data as unknown as ProductRow[]).map(mapProduct);
 }
 
+// ---------- Hỏi đáp sản phẩm ----------
+export interface ProductQuestion {
+  id: string;
+  askerName: string;
+  question: string;
+  answer: string | null;
+  date: string;
+}
+export const getProductQuestions = cache(async (productId: string): Promise<ProductQuestion[]> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('product_questions')
+    .select('id, asker_name, question, answer, created_at')
+    .eq('product_id', productId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getProductQuestions:', error.message); return []; }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((q: any) => ({ id: q.id, askerName: q.asker_name, question: q.question, answer: q.answer, date: q.created_at }));
+});
+
 // ---------- Categories ----------
 export const getCategories = cache(async (): Promise<Category[]> => {
   const supabase = await createClient();
