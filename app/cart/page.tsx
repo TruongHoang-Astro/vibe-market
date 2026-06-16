@@ -1,32 +1,47 @@
 'use client';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft, Tag, ChevronRight, Gift, Truck, MessageCircle, Store } from 'lucide-react';
 import { useCartStore } from '@/lib/store/cart-store';
 import { useChatStore } from '@/lib/store/chat-store';
 import { formatPrice } from '@/lib/data/mock-data';
+import { validateVoucher } from '@/app/actions/voucher';
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, clearCart, getTotalPrice } = useCartStore();
+  const { items, removeItem, updateQuantity, clearCart, getTotalPrice, voucherCode, setVoucher } = useCartStore();
   const { openChat } = useChatStore();
-  const [couponCode, setCouponCode] = useState('');
-  const [couponApplied, setCouponApplied] = useState(false);
+  const [couponCode, setCouponCode] = useState(voucherCode ?? '');
+  const [discount, setDiscount] = useState(0);
+  const [couponDesc, setCouponDesc] = useState('');
   const [couponError, setCouponError] = useState('');
+  const [applying, setApplying] = useState(false);
 
   const subtotal = getTotalPrice();
   const shipping = subtotal >= 299000 ? 0 : 30000;
-  const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
-  const total = subtotal + shipping - discount;
+  const total = Math.max(0, subtotal + shipping - discount);
+  const couponApplied = discount > 0;
 
-  const handleCoupon = () => {
-    if (couponCode.toUpperCase() === 'VIBE10') {
-      setCouponApplied(true);
-      setCouponError('');
-    } else {
-      setCouponError('Mã giảm giá không hợp lệ');
-    }
+  const applyVoucher = async (code: string) => {
+    if (!code.trim()) { setCouponError('Nhập mã giảm giá'); return; }
+    const shopIds = [...new Set(items.map(i => i.shopId))];
+    setApplying(true);
+    const { voucher, error } = await validateVoucher(code, subtotal, shopIds);
+    setApplying(false);
+    if (error || !voucher) { setCouponError(error || 'Mã không hợp lệ'); setDiscount(0); setCouponDesc(''); setVoucher(null); return; }
+    setCouponError(''); setDiscount(voucher.discount); setCouponDesc(voucher.description);
+    setVoucher(voucher.code); setCouponCode(voucher.code);
+    toast.success(`Đã áp dụng mã ${voucher.code}`);
   };
+  const handleCoupon = () => applyVoucher(couponCode);
+  const removeVoucher = () => { setDiscount(0); setCouponDesc(''); setCouponCode(''); setCouponError(''); setVoucher(null); };
+
+  // Khôi phục voucher đã lưu (nếu còn hợp lệ)
+  useEffect(() => {
+    if (voucherCode && subtotal > 0) applyVoucher(voucherCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (items.length === 0) {
     return (
@@ -196,14 +211,14 @@ export default function CartPage() {
                         style={{ width: '100%', padding: '11px 12px 11px 34px', border: `1.5px solid ${couponError ? '#ef4444' : couponApplied ? '#16a34a' : 'var(--gray-200)'}`, borderRadius: '10px', fontSize: '13px', fontFamily: 'Inter', outline: 'none', background: couponApplied ? '#f0fdf4' : 'white' }}
                       />
                     </div>
-                    <button onClick={handleCoupon} disabled={couponApplied || !couponCode}
-                      style={{ padding: '0 16px', background: couponApplied ? '#16a34a' : 'var(--primary)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, fontSize: '13px', cursor: couponApplied ? 'default' : 'pointer', opacity: !couponCode && !couponApplied ? 0.5 : 1 }}>
-                      {couponApplied ? '✓' : 'Áp dụng'}
+                    <button onClick={couponApplied ? removeVoucher : handleCoupon} disabled={applying || (!couponApplied && !couponCode)}
+                      style={{ padding: '0 16px', background: couponApplied ? '#16a34a' : 'var(--primary)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, fontSize: '13px', cursor: 'pointer', opacity: applying || (!couponCode && !couponApplied) ? 0.5 : 1 }}>
+                      {applying ? '...' : couponApplied ? 'Bỏ' : 'Áp dụng'}
                     </button>
                   </div>
                   {couponError && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '6px' }}>{couponError}</p>}
-                  {couponApplied && <p style={{ color: '#16a34a', fontSize: '12px', marginTop: '6px', fontWeight: 600 }}>✓ Giảm 10% đã được áp dụng! (Thử: VIBE10)</p>}
-                  {!couponApplied && !couponError && <p style={{ color: 'var(--gray-400)', fontSize: '12px', marginTop: '4px' }}>Thử mã: VIBE10</p>}
+                  {couponApplied && <p style={{ color: '#16a34a', fontSize: '12px', marginTop: '6px', fontWeight: 600 }}>✓ {couponDesc || 'Đã áp dụng mã giảm giá'}</p>}
+                  {!couponApplied && !couponError && <p style={{ color: 'var(--gray-400)', fontSize: '12px', marginTop: '4px' }}>Thử mã: VIBE10, FREESHIP50</p>}
                 </div>
 
                 {/* Summary lines */}
@@ -220,7 +235,7 @@ export default function CartPage() {
                   </div>
                   {couponApplied && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                      <span style={{ color: '#16a34a', display: 'flex', alignItems: 'center', gap: '4px' }}><Gift size={14} /> Giảm giá (VIBE10)</span>
+                      <span style={{ color: '#16a34a', display: 'flex', alignItems: 'center', gap: '4px' }}><Gift size={14} /> Giảm giá ({couponCode})</span>
                       <span style={{ fontWeight: 600, color: '#16a34a' }}>-{formatPrice(discount)}</span>
                     </div>
                   )}

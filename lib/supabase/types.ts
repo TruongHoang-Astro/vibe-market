@@ -203,6 +203,8 @@ export interface Database {
           payment_status: string;
           paid_at: string | null;
           payment_ref: string | null;
+          voucher_code: string | null;
+          discount: number;
           created_at: string;
         };
         Insert: {
@@ -218,6 +220,8 @@ export interface Database {
           payment_status?: string;
           paid_at?: string | null;
           payment_ref?: string | null;
+          voucher_code?: string | null;
+          discount?: number;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['orders']['Insert']>;
@@ -423,6 +427,42 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['return_requests']['Insert']>;
+        Relationships: [];
+      };
+      vouchers: {
+        Row: {
+          id: string;
+          code: string;
+          description: string;
+          discount_type: string;
+          discount_value: number;
+          max_discount: number | null;
+          min_order: number;
+          shop_id: string | null;
+          usage_limit: number | null;
+          used_count: number;
+          starts_at: string | null;
+          expires_at: string | null;
+          active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          description?: string;
+          discount_type?: string;
+          discount_value?: number;
+          max_discount?: number | null;
+          min_order?: number;
+          shop_id?: string | null;
+          usage_limit?: number | null;
+          used_count?: number;
+          starts_at?: string | null;
+          expires_at?: string | null;
+          active?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['vouchers']['Insert']>;
         Relationships: [];
       };
     };

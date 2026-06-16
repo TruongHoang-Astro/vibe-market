@@ -18,6 +18,8 @@ export interface CartItem {
 interface CartStore {
   items: CartItem[];
   isOpen: boolean;
+  voucherCode: string | null;
+  setVoucher: (code: string | null) => void;
   addItem: (item: Omit<CartItem, 'id'>) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -34,6 +36,8 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       isOpen: false,
+      voucherCode: null,
+      setVoucher: (code) => set({ voucherCode: code }),
 
       addItem: (item) => {
         const id = `${item.productId}-${item.color || ''}-${item.size || ''}`;
@@ -63,7 +67,7 @@ export const useCartStore = create<CartStore>()(
         }));
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], voucherCode: null }),
 
       toggleCart: () => set(state => ({ isOpen: !state.isOpen })),
       openCart: () => set({ isOpen: true }),

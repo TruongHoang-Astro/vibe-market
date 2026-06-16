@@ -4,6 +4,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { createNotification } from '@/lib/notify';
 import { computeShippingFee } from '@/lib/shipping';
+import { validateVoucher } from './voucher';
 
 export interface NewOrderItem {
   productId: string;
@@ -18,6 +19,7 @@ export interface NewOrderPayload {
   address: string;
   shippingMethod: string;                 // standard | express | same-day
   paymentProvider: 'cod' | 'vnpay';       // online (vnpay) hay COD
+  voucherCode?: string;                   // mã giảm giá (re-validate phía server)
 }
 
 export async function createOrder(
@@ -28,10 +30,24 @@ export async function createOrder(
   if (!user) return { error: 'Bạn cần đăng nhập để đặt hàng' };
   if (!payload.items?.length) return { error: 'Giỏ hàng đang trống' };
 
-  // Tính tiền phía server — KHÔNG tin số từ client (cả phí ship)
+  // Tính tiền phía server — KHÔNG tin số từ client (cả phí ship lẫn giảm giá)
   const subtotal = payload.items.reduce((s, it) => s + it.price * it.qty, 0);
   const shippingFee = computeShippingFee(payload.shippingMethod, subtotal);
-  const total = subtotal + shippingFee;
+
+  // Voucher: re-validate phía server (bỏ qua nếu chưa chạy voucher.sql)
+  let discount = 0;
+  let voucherCode: string | null = null;
+  if (payload.voucherCode) {
+    try {
+      const admin0 = createAdminClient();
+      const { data: prodShops } = await admin0.from('products').select('shop_id').in('id', payload.items.map((i) => i.productId));
+      const shopIds = [...new Set((prodShops ?? []).map((p) => p.shop_id))];
+      const { voucher } = await validateVoucher(payload.voucherCode, subtotal, shopIds);
+      if (voucher) { discount = voucher.discount; voucherCode = voucher.code; }
+    } catch (e) { console.error('createOrder (voucher):', e); }
+  }
+
+  const total = Math.max(0, subtotal + shippingFee - discount);
 
   const isOnline = payload.paymentProvider === 'vnpay';
   const paymentLabel = isOnline ? 'VNPay' : 'COD';
@@ -43,7 +59,7 @@ export async function createOrder(
     address: payload.address,
     payment_method: paymentLabel,
   };
-  // Thử insert kèm cột vận chuyển/thanh toán (payment.sql); chưa migrate → fallback base.
+  // Thử insert kèm cột vận chuyển/thanh toán/voucher (payment.sql + voucher.sql); chưa migrate → fallback base.
   let { data: order, error: orderErr } = await supabase
     .from('orders')
     .insert({
@@ -52,6 +68,8 @@ export async function createOrder(
       shipping_fee: shippingFee,
       payment_provider: isOnline ? 'vnpay' : 'cod',
       payment_status: isOnline ? 'pending' : 'unpaid',
+      voucher_code: voucherCode,
+      discount,
     })
     .select('id')
     .single();
@@ -61,6 +79,15 @@ export async function createOrder(
   if (orderErr || !order) {
     console.error('createOrder (order):', orderErr?.message);
     return { error: 'Không tạo được đơn hàng, vui lòng thử lại' };
+  }
+
+  // Tăng lượt dùng voucher (best-effort)
+  if (voucherCode) {
+    try {
+      const admin = createAdminClient();
+      const { data: vrow } = await admin.from('vouchers').select('id, used_count').ilike('code', voucherCode).maybeSingle();
+      if (vrow) await admin.from('vouchers').update({ used_count: vrow.used_count + 1 }).eq('id', vrow.id);
+    } catch (e) { console.error('createOrder (voucher count):', e); }
   }
 
   const rows = payload.items.map((it) => ({

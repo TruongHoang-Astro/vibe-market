@@ -10,6 +10,7 @@ import { useUser } from '@/lib/supabase/use-user';
 import { createClient } from '@/lib/supabase/client';
 import { createOrder } from '@/app/actions/orders';
 import { initiatePayment } from '@/app/actions/payment';
+import { validateVoucher } from '@/app/actions/voucher';
 import { formatPrice } from '@/lib/data/mock-data';
 import { SHIPPING_METHODS, computeShippingFee, FREE_SHIP_THRESHOLD } from '@/lib/shipping';
 import AddressForm, { type AddressValue } from '@/components/address/AddressForm';
@@ -44,7 +45,9 @@ export default function CheckoutPage() {
   const [addingNew, setAddingNew] = useState(false);
   const [loadingAddr, setLoadingAddr] = useState(true);
   const [savingAddr, setSavingAddr] = useState(false);
-  const { items, getTotalPrice, clearCart } = useCartStore();
+  const { items, getTotalPrice, clearCart, voucherCode } = useCartStore();
+  const [voucherDiscount, setVoucherDiscount] = useState(0);
+  const [voucherDesc, setVoucherDesc] = useState('');
   // Giỏ hàng nằm ở localStorage → chỉ render sau khi client mount để tránh hydration mismatch.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -83,7 +86,18 @@ export default function CheckoutPage() {
 
   const subtotal = getTotalPrice();
   const shippingFee = computeShippingFee(shippingMethod, subtotal);
-  const total = subtotal + shippingFee;
+  const total = Math.max(0, subtotal + shippingFee - voucherDiscount);
+
+  // Áp dụng lại voucher từ giỏ (xác thực server, đây mới là số dùng cho đơn)
+  useEffect(() => {
+    if (!voucherCode || subtotal <= 0) { setVoucherDiscount(0); setVoucherDesc(''); return; }
+    const shopIds = [...new Set(items.map((i) => i.shopId))];
+    validateVoucher(voucherCode, subtotal, shopIds).then(({ voucher }) => {
+      if (voucher) { setVoucherDiscount(voucher.discount); setVoucherDesc(voucher.description); }
+      else { setVoucherDiscount(0); setVoucherDesc(''); }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voucherCode, subtotal]);
 
   const selectedAddr = addresses.find((a) => a.id === selectedAddrId) ?? null;
 
@@ -114,6 +128,7 @@ export default function CheckoutPage() {
       address: fullAddress,
       shippingMethod,
       paymentProvider: provider,
+      voucherCode: voucherCode ?? undefined,
     });
 
     if (error || !newId) {
@@ -419,6 +434,12 @@ export default function CheckoutPage() {
                     <span style={{ color: 'var(--gray-600)' }}>Phí vận chuyển</span>
                     <span style={{ color: shippingFee === 0 ? '#16a34a' : 'inherit' }}>{shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}</span>
                   </div>
+                  {voucherDiscount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                      <span style={{ color: '#16a34a' }}>🎟️ Giảm giá ({voucherCode})</span>
+                      <span style={{ fontWeight: 600, color: '#16a34a' }}>-{formatPrice(voucherDiscount)}</span>
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '16px', borderTop: '2px solid var(--gray-100)' }}>
                   <span style={{ fontWeight: 800, fontSize: '15px' }}>Tổng cộng</span>

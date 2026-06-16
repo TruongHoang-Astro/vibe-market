@@ -304,6 +304,17 @@
   + hoàn kho + notify buyer). Resilient (payment_status refunded best-effort).
 - Build xanh 19 routes; smoke test /orders render OK.
 
+### 9) NOW-2: Voucher thật (16/06/2026)
+- `supabase/voucher.sql`: bảng `vouchers` (percent/fixed, trần giảm, đơn tối thiểu, shop_id null=sàn, usage_limit,
+  used_count, hạn dùng) + cột orders `voucher_code`/`discount` + seed VIBE10 & FREESHIP50. RLS: đọc công khai, seller quản lý voucher shop mình.
+- `app/actions/voucher.ts` `validateVoucher(code, subtotal, shopIds)` — kiểm tra hạn/lượt/ngưỡng/scope, tính giảm (server-side).
+- `createOrder`: **re-validate phía server** (không tin client), áp giảm vào total, lưu `voucher_code`/`discount`, tăng `used_count`.
+- Cart store thêm `voucherCode` (persist). Cart: ô mã wire `validateVoucher` thật (bỏ VIBE10 hardcode 10% cũ), nút "Bỏ" gỡ mã.
+  Checkout: đọc voucher từ giỏ, re-validate, hiện dòng giảm giá, truyền vào đơn.
+- Code resilient (orders insert fallback nếu chưa chạy voucher.sql; validateVoucher báo "Mã không tồn tại" nếu bảng chưa có).
+- Build xanh 19 routes; smoke test cart hiện ô mã + gợi ý VIBE10/FREESHIP50, không lỗi.
+- ⏳ Còn lại trong NOW: **Biến thể sản phẩm (variants)** — thay đổi data-model lớn nhất, làm ở pass riêng.
+
 ---
 
 ## Lộ trình đề xuất
