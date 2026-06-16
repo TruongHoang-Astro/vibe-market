@@ -105,3 +105,40 @@ export async function createOrder(
 
   return { orderId: order.id, paymentProvider: isOnline ? 'vnpay' : 'cod' };
 }
+
+// ---------- Buyer hủy đơn (chỉ khi chưa giao) ----------
+export async function cancelOrder(orderId: string): Promise<{ ok?: true; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Bạn cần đăng nhập' };
+
+  const { data: order } = await supabase
+    .from('orders').select('id, user_id, status').eq('id', orderId).maybeSingle();
+  if (!order || order.user_id !== user.id) return { error: 'Không tìm thấy đơn hàng' };
+  if (order.status !== 'pending' && order.status !== 'confirmed') {
+    return { error: 'Chỉ có thể hủy đơn đang chờ xác nhận hoặc đã xác nhận' };
+  }
+
+  // Cập nhật qua admin (RLS orders không cho buyer update). Trigger sẽ hoàn kho.
+  const admin = createAdminClient();
+  const { error } = await admin.from('orders').update({ status: 'cancelled' }).eq('id', orderId);
+  if (error) { console.error('cancelOrder:', error.message); return { error: 'Hủy đơn thất bại' }; }
+
+  // Thông báo chủ shop có sản phẩm trong đơn (best-effort)
+  try {
+    const { data: items } = await admin.from('order_items').select('product_id').eq('order_id', orderId);
+    const ids = [...new Set((items ?? []).map((i) => i.product_id).filter((x): x is string => !!x))];
+    if (ids.length) {
+      const { data: prods } = await admin.from('products').select('shop_id').in('id', ids);
+      const shopIds = [...new Set((prods ?? []).map((p) => p.shop_id))];
+      const { data: shops } = await admin.from('shops').select('owner_id').in('id', shopIds);
+      const owners = [...new Set((shops ?? []).map((s) => s.owner_id).filter((o): o is string => !!o))];
+      await Promise.all(owners.map((o) => createNotification(admin, {
+        userId: o, type: 'order', title: 'Đơn hàng bị hủy',
+        message: `Khách đã hủy đơn ${orderId}.`, link: '/seller/dashboard',
+      })));
+    }
+  } catch (e) { console.error('cancelOrder (notif):', e); }
+
+  return { ok: true };
+}

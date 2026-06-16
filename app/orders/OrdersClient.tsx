@@ -1,13 +1,26 @@
 'use client';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Package, ChevronRight, Clock, CheckCircle2, Truck, XCircle, Star, RotateCcw, ShoppingBag, MessageCircle, LogIn, CreditCard } from 'lucide-react';
+import { Package, ChevronRight, Clock, CheckCircle2, Truck, XCircle, Star, RotateCcw, ShoppingBag, MessageCircle, LogIn, CreditCard, X, Upload, Undo2 } from 'lucide-react';
 import { formatPrice } from '@/lib/data/mock-data';
 import type { Order } from '@/lib/data/mock-data';
 import { useChatStore } from '@/lib/store/chat-store';
+import { useUser } from '@/lib/supabase/use-user';
+import { createClient } from '@/lib/supabase/client';
 import { initiatePayment } from '@/app/actions/payment';
+import { cancelOrder } from '@/app/actions/orders';
+import { createReturnRequest } from '@/app/actions/returns';
+import { uploadChatMedia } from '@/app/actions/chat';
+
+const returnReasons = ['Hàng lỗi / hư hỏng', 'Khác với mô tả', 'Thiếu hàng / sai sản phẩm', 'Hàng giả / kém chất lượng', 'Lý do khác'];
+const returnBadge: Record<string, { label: string; color: string; bg: string }> = {
+  pending:  { label: 'Đang xử lý trả hàng', color: '#d97706', bg: '#fef3c7' },
+  approved: { label: 'Đã duyệt trả hàng',   color: '#16a34a', bg: '#f0fdf4' },
+  rejected: { label: 'Từ chối trả hàng',    color: '#dc2626', bg: '#fee2e2' },
+};
 
 const paymentBadge: Record<string, { label: string; color: string; bg: string }> = {
   paid:    { label: 'Đã thanh toán',  color: '#16a34a', bg: '#f0fdf4' },
@@ -33,9 +46,26 @@ const tabs = [
 ];
 
 export default function OrdersClient({ orders, loggedIn }: { orders: Order[]; loggedIn: boolean }) {
+  const router = useRouter();
+  const { user, profile } = useUser();
   const [activeTab, setActiveTab] = useState('all');
   const [paying, setPaying] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
+  const [returns, setReturns] = useState<Record<string, string>>({}); // orderId → status
   const { openChat } = useChatStore();
+
+  // Review modal
+  const [reviewOrder, setReviewOrder] = useState<Order | null>(null);
+  const [reviewRatings, setReviewRatings] = useState<Record<string, number>>({});
+  const [reviewComments, setReviewComments] = useState<Record<string, string>>({});
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Return modal
+  const [returnOrder, setReturnOrder] = useState<Order | null>(null);
+  const [returnReason, setReturnReason] = useState('');
+  const [returnDetail, setReturnDetail] = useState('');
+  const [returnImages, setReturnImages] = useState<string[]>([]);
+  const [submittingReturn, setSubmittingReturn] = useState(false);
 
   // Thông báo kết quả thanh toán (?paid / ?failed) — đọc trực tiếp để khỏi cần Suspense
   useEffect(() => {
@@ -44,12 +74,78 @@ export default function OrdersClient({ orders, loggedIn }: { orders: Order[]; lo
     else if (sp.get('failed')) toast.error('Thanh toán chưa hoàn tất. Bạn có thể thử thanh toán lại.');
   }, []);
 
+  // Trạng thái yêu cầu trả hàng theo đơn
+  const loadReturns = async () => {
+    if (!user) return;
+    const { data } = await createClient().from('return_requests').select('order_id, status').order('created_at', { ascending: false });
+    const map: Record<string, string> = {};
+    for (const r of (data ?? []) as { order_id: string; status: string }[]) if (!map[r.order_id]) map[r.order_id] = r.status;
+    setReturns(map);
+  };
+  useEffect(() => { loadReturns(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user]);
+
   const handlePay = async (orderId: string) => {
     if (paying) return;
     setPaying(orderId);
     const res = await initiatePayment(orderId);
     if (res.error || !res.url) { toast.error(res.error || 'Không khởi tạo được thanh toán'); setPaying(null); return; }
     window.location.href = res.url;
+  };
+
+  const handleCancel = async (orderId: string) => {
+    if (cancelling) return;
+    if (!window.confirm('Hủy đơn hàng này? Hành động không thể hoàn tác.')) return;
+    setCancelling(orderId);
+    const res = await cancelOrder(orderId);
+    setCancelling(null);
+    if (res.error) { toast.error(res.error); return; }
+    toast.success('Đã hủy đơn hàng');
+    router.refresh();
+  };
+
+  // ----- Review -----
+  const openReview = (order: Order) => {
+    setReviewOrder(order); setReviewRatings({}); setReviewComments({});
+  };
+  const submitReview = async () => {
+    if (!reviewOrder || !user) return;
+    const userName = profile?.full_name || user.email?.split('@')[0] || 'Người dùng';
+    const rows = reviewOrder.products
+      .filter((p) => p.productId && (reviewRatings[p.productId] ?? 0) > 0)
+      .map((p) => ({ product_id: p.productId, user_id: user.id, user_name: userName, avatar: profile?.avatar_url ?? null, rating: reviewRatings[p.productId], comment: (reviewComments[p.productId] ?? '').trim() }));
+    if (!rows.length) { toast.error('Vui lòng chọn số sao cho ít nhất 1 sản phẩm'); return; }
+    setSubmittingReview(true);
+    const { error } = await createClient().from('reviews').insert(rows);
+    setSubmittingReview(false);
+    if (error) { toast.error('Gửi đánh giá thất bại'); return; }
+    toast.success('Cảm ơn đánh giá của bạn! 🌟');
+    setReviewOrder(null);
+  };
+
+  // ----- Return -----
+  const openReturn = (order: Order) => {
+    setReturnOrder(order); setReturnReason(''); setReturnDetail(''); setReturnImages([]);
+  };
+  const handleReturnUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const { url, error } = await uploadChatMedia(ev.target?.result as string);
+      if (error || !url) { toast.error('Tải ảnh thất bại'); return; }
+      setReturnImages((prev) => [...prev, url]);
+    };
+    reader.readAsDataURL(file); e.target.value = '';
+  };
+  const submitReturn = async () => {
+    if (!returnOrder) return;
+    if (!returnReason) { toast.error('Vui lòng chọn lý do'); return; }
+    setSubmittingReturn(true);
+    const res = await createReturnRequest({ orderId: returnOrder.id, reason: returnReason, detail: returnDetail, images: returnImages });
+    setSubmittingReturn(false);
+    if (res.error) { toast.error(res.error); return; }
+    toast.success('Đã gửi yêu cầu trả hàng. Shop sẽ phản hồi sớm.');
+    setReturnOrder(null);
+    loadReturns();
   };
 
   const filtered = orders.filter(o => activeTab === 'all' || o.status === activeTab);
@@ -142,6 +238,11 @@ export default function OrdersClient({ orders, loggedIn }: { orders: Order[]; lo
                             </span>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            {returns[order.id] && returnBadge[returns[order.id]] && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '99px', background: returnBadge[returns[order.id]].bg, color: returnBadge[returns[order.id]].color, fontSize: '12px', fontWeight: 700 }}>
+                                <Undo2 size={12} /> {returnBadge[returns[order.id]].label}
+                              </div>
+                            )}
                             {order.paymentStatus && paymentBadge[order.paymentStatus] && (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '99px', background: paymentBadge[order.paymentStatus].bg, color: paymentBadge[order.paymentStatus].color, fontSize: '12px', fontWeight: 700 }}>
                                 <CreditCard size={12} /> {paymentBadge[order.paymentStatus].label}
@@ -208,15 +309,21 @@ export default function OrdersClient({ orders, loggedIn }: { orders: Order[]; lo
                                 </motion.button>
                               )}
                               {order.status === 'delivered' && (
-                                <motion.button whileHover={{ scale: 1.03 }}
+                                <motion.button whileHover={{ scale: 1.03 }} onClick={() => openReview(order)}
                                   style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'white', border: '2px solid var(--primary)', borderRadius: '10px', color: 'var(--primary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
                                   <Star size={14} /> Đánh giá
                                 </motion.button>
                               )}
+                              {(order.status === 'delivered' || order.status === 'shipping') && !returns[order.id] && (
+                                <motion.button whileHover={{ scale: 1.03 }} onClick={() => openReturn(order)}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'white', border: '2px solid var(--gray-200)', borderRadius: '10px', color: 'var(--gray-600)', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
+                                  <Undo2 size={14} /> Trả hàng
+                                </motion.button>
+                              )}
                               {(order.status === 'pending' || order.status === 'confirmed') && (
-                                <motion.button whileHover={{ scale: 1.03 }}
-                                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: '#fff5f5', border: '2px solid #fecaca', borderRadius: '10px', color: '#dc2626', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
-                                  <XCircle size={14} /> Hủy đơn
+                                <motion.button whileHover={{ scale: 1.03 }} onClick={() => handleCancel(order.id)} disabled={cancelling === order.id}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: '#fff5f5', border: '2px solid #fecaca', borderRadius: '10px', color: '#dc2626', fontWeight: 700, fontSize: '13px', cursor: 'pointer', opacity: cancelling === order.id ? 0.6 : 1 }}>
+                                  <XCircle size={14} /> {cancelling === order.id ? 'Đang hủy...' : 'Hủy đơn'}
                                 </motion.button>
                               )}
                               <Link href="/products">
@@ -238,6 +345,95 @@ export default function OrdersClient({ orders, loggedIn }: { orders: Order[]; lo
           </div>
         </>
       )}
+
+      {/* ── REVIEW MODAL ── */}
+      <AnimatePresence>
+        {reviewOrder && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setReviewOrder(null)}
+            style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} onClick={(e) => e.stopPropagation()}
+              style={{ background: 'white', borderRadius: '20px', padding: '28px', width: '520px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h2 style={{ fontFamily: 'Playfair Display', fontSize: '20px', fontWeight: 800 }}>Đánh giá sản phẩm</h2>
+                <button onClick={() => setReviewOrder(null)} style={{ background: 'var(--gray-100)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                {reviewOrder.products.map((p, i) => (
+                  <div key={i} style={{ borderBottom: i < reviewOrder.products.length - 1 ? '1px solid var(--gray-100)' : 'none', paddingBottom: '14px' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
+                      <img src={p.image} alt={p.name} style={{ width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover' }} />
+                      <span className="line-clamp-2" style={{ fontSize: '13px', fontWeight: 500, flex: 1 }}>{p.name}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <button key={s} onClick={() => p.productId && setReviewRatings((prev) => ({ ...prev, [p.productId]: s }))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                          <Star size={24} fill={s <= (reviewRatings[p.productId] ?? 0) ? '#f59e0b' : '#e5e5e5'} color={s <= (reviewRatings[p.productId] ?? 0) ? '#f59e0b' : '#e5e5e5'} />
+                        </button>
+                      ))}
+                    </div>
+                    <input value={reviewComments[p.productId] ?? ''} onChange={(e) => p.productId && setReviewComments((prev) => ({ ...prev, [p.productId]: e.target.value }))}
+                      placeholder="Nhận xét về sản phẩm (tuỳ chọn)..." className="input-base" />
+                  </div>
+                ))}
+                <button onClick={submitReview} disabled={submittingReview} className="btn-primary" style={{ justifyContent: 'center', padding: '12px', borderRadius: '10px', opacity: submittingReview ? 0.7 : 1 }}>
+                  <Star size={16} /> <span>{submittingReview ? 'Đang gửi...' : 'Gửi đánh giá'}</span>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── RETURN MODAL ── */}
+      <AnimatePresence>
+        {returnOrder && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setReturnOrder(null)}
+            style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} onClick={(e) => e.stopPropagation()}
+              style={{ background: 'white', borderRadius: '20px', padding: '28px', width: '480px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <h2 style={{ fontFamily: 'Playfair Display', fontSize: '20px', fontWeight: 800 }}>Trả hàng / Hoàn tiền</h2>
+                <button onClick={() => setReturnOrder(null)} style={{ background: 'var(--gray-100)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
+              </div>
+              <p style={{ fontSize: '13px', color: 'var(--gray-500)', marginBottom: '18px' }}>Đơn <strong style={{ color: 'var(--primary)' }}>{returnOrder.id}</strong></p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Lý do *</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {returnReasons.map((r) => (
+                      <button key={r} onClick={() => setReturnReason(r)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', border: `2px solid ${returnReason === r ? 'var(--primary)' : 'var(--gray-200)'}`, borderRadius: '10px', background: returnReason === r ? 'rgba(239,68,68,0.03)' : 'white', cursor: 'pointer', textAlign: 'left', fontSize: '14px', fontWeight: returnReason === r ? 600 : 400 }}>
+                        <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: `2px solid ${returnReason === r ? 'var(--primary)' : 'var(--gray-300)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          {returnReason === r && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)' }} />}
+                        </div>
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <textarea value={returnDetail} onChange={(e) => setReturnDetail(e.target.value)} placeholder="Mô tả chi tiết vấn đề (tuỳ chọn)..."
+                  style={{ width: '100%', padding: '12px 16px', border: '1.5px solid var(--gray-200)', borderRadius: '8px', fontSize: '14px', fontFamily: 'Inter', resize: 'vertical', minHeight: '80px', outline: 'none' }} />
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Ảnh minh chứng (tuỳ chọn)</label>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {returnImages.map((img, i) => (
+                      <img key={i} src={img} alt="" style={{ width: '64px', height: '64px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--gray-200)' }} />
+                    ))}
+                    <label style={{ width: '64px', height: '64px', border: '2px dashed var(--gray-300)', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--gray-400)', gap: '2px' }}>
+                      <Upload size={18} />
+                      <span style={{ fontSize: '10px' }}>Ảnh</span>
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleReturnUpload} />
+                    </label>
+                  </div>
+                </div>
+                <button onClick={submitReturn} disabled={submittingReturn} className="btn-primary" style={{ justifyContent: 'center', padding: '12px', borderRadius: '10px', opacity: submittingReturn ? 0.7 : 1 }}>
+                  <Undo2 size={16} /> <span>{submittingReturn ? 'Đang gửi...' : 'Gửi yêu cầu trả hàng'}</span>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

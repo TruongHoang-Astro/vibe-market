@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, TrendingUp, Settings,
   Bell, Plus, Edit3, Trash2, Eye, Search,
   Upload, X, Check, Star, Zap, LogOut, LogIn,
-  ArrowUpRight, ArrowDownRight, DollarSign, Tag, MessageCircle, User, Store, Camera, Menu,
+  ArrowUpRight, ArrowDownRight, DollarSign, Tag, MessageCircle, User, Store, Camera, Menu, Undo2,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -18,6 +18,8 @@ import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { createProduct, updateProduct, deleteProduct, updateShop, getShopOrders, updateOrderStatus } from '@/app/actions/seller';
 import type { SellerOrder, SellerStats } from '@/app/actions/seller';
+import { getShopReturns, resolveReturn } from '@/app/actions/returns';
+import type { ShopReturn } from '@/app/actions/returns';
 import { uploadChatMedia } from '@/app/actions/chat';
 import SellerChat from './SellerChat';
 
@@ -26,6 +28,7 @@ const navItems = [
   { key: 'products', label: 'Sản phẩm', icon: <Package size={18} /> },
   { key: 'chat', label: 'Tin nhắn', icon: <MessageCircle size={18} /> },
   { key: 'orders', label: 'Đơn hàng', icon: <ShoppingBag size={18} /> },
+  { key: 'returns', label: 'Trả hàng', icon: <Undo2 size={18} /> },
   { key: 'revenue', label: 'Doanh thu', icon: <TrendingUp size={18} /> },
   { key: 'settings', label: 'Cài đặt', icon: <Settings size={18} /> },
 ];
@@ -105,6 +108,7 @@ export default function SellerDashboard() {
   const [savingShop, setSavingShop] = useState(false);
   const [sellerOrders, setSellerOrders] = useState<SellerOrder[]>([]);
   const [stats, setStats] = useState<SellerStats>({ totalRevenue: 0, totalOrders: 0, monthly: [] });
+  const [returns, setReturns] = useState<ShopReturn[]>([]);
 
   const loadData = async () => {
     if (!user) { setLoadingShop(false); return; }
@@ -128,8 +132,17 @@ export default function SellerDashboard() {
       const { orders: so, stats: st } = await getShopOrders();
       setSellerOrders(so);
       setStats(st);
+      const { returns: rr } = await getShopReturns();
+      setReturns(rr);
     }
     setLoadingShop(false);
+  };
+
+  const handleResolveReturn = async (id: string, status: 'approved' | 'rejected') => {
+    const res = await resolveReturn(id, status);
+    if (res.error) { toast.error(res.error); return; }
+    toast.success(status === 'approved' ? 'Đã duyệt trả hàng' : 'Đã từ chối yêu cầu');
+    loadData();
   };
 
   useEffect(() => { loadData(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user]);
@@ -537,6 +550,55 @@ export default function SellerDashboard() {
                   </table>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ── TRẢ HÀNG / HOÀN TIỀN ── */}
+          {activeTab === 'returns' && (
+            <div className="dash-table-card" style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', fontWeight: 700 }}>Yêu cầu trả hàng / hoàn tiền</h3>
+                <span style={{ background: '#fef3c7', color: '#d97706', fontSize: '12px', fontWeight: 700, padding: '3px 10px', borderRadius: '99px' }}>{returns.filter(r => r.status === 'pending').length} chờ xử lý</span>
+              </div>
+              {returns.length === 0 ? (
+                <div style={{ padding: '60px', textAlign: 'center', color: '#9ca3af' }}>
+                  <Undo2 size={48} style={{ marginBottom: '12px', opacity: 0.4 }} />
+                  <p style={{ fontWeight: 600, marginBottom: '6px' }}>Chưa có yêu cầu trả hàng</p>
+                  <p style={{ fontSize: '13px' }}>Yêu cầu trả hàng/hoàn tiền từ khách sẽ hiện ở đây.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {returns.map((r, i) => (
+                    <div key={r.id} style={{ padding: '18px 24px', borderBottom: i < returns.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: '240px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                            <span style={{ fontWeight: 700, color: '#ef4444', fontSize: '13px' }}>{r.orderId}</span>
+                            <span style={{ fontSize: '12px', color: '#9ca3af' }}>Khách #{r.buyerId.slice(0, 4).toUpperCase()}</span>
+                            <span style={{ fontSize: '12px', color: '#6b7280' }}>{new Date(r.date).toLocaleDateString('vi-VN')}</span>
+                            <span style={{ padding: '2px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: 700, background: r.status === 'pending' ? '#fef3c7' : r.status === 'approved' ? '#f0fdf4' : '#fee2e2', color: r.status === 'pending' ? '#d97706' : r.status === 'approved' ? '#16a34a' : '#dc2626' }}>
+                              {r.status === 'pending' ? 'Chờ xử lý' : r.status === 'approved' ? 'Đã duyệt' : 'Đã từ chối'}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '2px' }}>Lý do: {r.reason}</div>
+                          {r.detail && <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>{r.detail}</p>}
+                          {r.images.length > 0 && (
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
+                              {r.images.map((img, j) => <img key={j} src={img} alt="" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e5e7eb' }} />)}
+                            </div>
+                          )}
+                        </div>
+                        {r.status === 'pending' && (
+                          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                            <button onClick={() => handleResolveReturn(r.id, 'approved')} style={{ padding: '8px 16px', border: 'none', borderRadius: '8px', background: '#16a34a', color: 'white', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>Duyệt</button>
+                            <button onClick={() => handleResolveReturn(r.id, 'rejected')} style={{ padding: '8px 16px', border: '1.5px solid #fecaca', borderRadius: '8px', background: '#fff5f5', color: '#dc2626', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>Từ chối</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

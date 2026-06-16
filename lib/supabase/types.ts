@@ -401,6 +401,30 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['shop_follows']['Insert']>;
         Relationships: [];
       };
+      return_requests: {
+        Row: {
+          id: string;
+          order_id: string;
+          user_id: string;
+          reason: string;
+          detail: string;
+          images: string[] | null;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          user_id: string;
+          reason: string;
+          detail?: string;
+          images?: string[] | null;
+          status?: string;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['return_requests']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };

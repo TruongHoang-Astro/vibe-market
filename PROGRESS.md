@@ -295,6 +295,15 @@
   Chưa đăng nhập → nhắc đăng nhập. Đơn lưu địa chỉ đầy đủ (người nhận + SĐT + Phường/Xã) qua `formatFullAddress`.
 - Build xanh 19 routes; smoke test: dataset API 63 tỉnh OK, checkout step 0 hiện picker (login-gated) + link "Quản lý sổ địa chỉ".
 
+### 8) NOW-1: Hủy đơn + Đánh giá + Trả hàng (16/06/2026)
+- `supabase/orders_lifecycle.sql`: trigger **hủy đơn → hoàn kho + giảm sold**; bảng `return_requests` + RLS (buyer own).
+- **Hủy đơn**: `cancelOrder` (orders.ts) — buyer hủy khi pending/confirmed (admin update + notify shop); nút đã wire ở /orders.
+- **Đánh giá từ trang đơn**: nút "Đánh giá" mở modal chấm sao + nhận xét từng SP trong đơn (insert reviews → trigger cập nhật rating).
+- **Trả hàng/Hoàn tiền**: `app/actions/returns.ts` (createReturnRequest + getShopReturns + resolveReturn). Buyer gửi yêu cầu
+  (lý do + chi tiết + ảnh) ở /orders; badge trạng thái trên đơn. Seller có **tab "Trả hàng"** duyệt/từ chối (duyệt → đơn cancelled
+  + hoàn kho + notify buyer). Resilient (payment_status refunded best-effort).
+- Build xanh 19 routes; smoke test /orders render OK.
+
 ---
 
 ## Lộ trình đề xuất
