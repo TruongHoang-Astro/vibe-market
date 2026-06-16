@@ -236,6 +236,7 @@ export interface Database {
           qty: number;
           price: number;
           image: string | null;
+          variant_id: string | null;
         };
         Insert: {
           id?: string;
@@ -245,6 +246,7 @@ export interface Database {
           qty: number;
           price: number;
           image?: string | null;
+          variant_id?: string | null;
         };
         Update: Partial<Database['public']['Tables']['order_items']['Insert']>;
         Relationships: [];
@@ -463,6 +465,26 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['vouchers']['Insert']>;
+        Relationships: [];
+      };
+      product_variants: {
+        Row: {
+          id: string;
+          product_id: string;
+          name: string;
+          price: number;
+          stock: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          name: string;
+          price?: number;
+          stock?: number;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['product_variants']['Insert']>;
         Relationships: [];
       };
     };

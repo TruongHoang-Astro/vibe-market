@@ -313,7 +313,19 @@
   Checkout: đọc voucher từ giỏ, re-validate, hiện dòng giảm giá, truyền vào đơn.
 - Code resilient (orders insert fallback nếu chưa chạy voucher.sql; validateVoucher báo "Mã không tồn tại" nếu bảng chưa có).
 - Build xanh 19 routes; smoke test cart hiện ô mã + gợi ý VIBE10/FREESHIP50, không lỗi.
-- ⏳ Còn lại trong NOW: **Biến thể sản phẩm (variants)** — thay đổi data-model lớn nhất, làm ở pass riêng.
+
+### 10) NOW-3: Biến thể sản phẩm / phân loại hàng (16/06/2026) — HOÀN TẤT NOW
+- `supabase/variants.sql`: bảng `product_variants` (name/price/stock riêng) + RLS owner; `order_items.variant_id`;
+  trigger trừ tồn kho biến thể khi đặt + hoàn khi hủy.
+- Seller: modal sản phẩm thêm section **"Phân loại hàng"** (rows name/price/stock). createProduct/updateProduct lưu biến thể;
+  khi có biến thể → product.price = thấp nhất, stock = tổng (badge tự tính). updateProduct đồng bộ xóa+thêm.
+- `getProductById` nạp variants (resilient). Trang SP: **bộ chọn Phân loại** (giá theo biến thể, ẩn biến thể hết hàng);
+  giá hiển thị/tiết kiệm/tồn kho/nút mua theo biến thể đang chọn.
+- cart-store thêm `variantId`/`variantName` (id giỏ phân biệt theo biến thể); cart + drawer hiện "Phân loại".
+  createOrder lưu `variant_id` + tên item kèm phân loại (resilient fallback nếu chưa migrate).
+- Build xanh 19 routes; smoke test: SP không biến thể chạy như cũ (resilient), không lỗi runtime.
+
+**✅ NOW tier (gap Shopee ưu tiên 1) HOÀN TẤT**: hủy đơn+đánh giá+trả hàng, voucher thật, biến thể SP.
 
 ---
 

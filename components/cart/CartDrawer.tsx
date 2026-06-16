@@ -95,6 +95,7 @@ export default function CartDrawer() {
                           <div style={{ display: 'flex', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
                             {item.color && <span style={{ fontSize: '11px', color: 'var(--gray-500)', display: 'flex', alignItems: 'center', gap: '3px' }}><span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.color, border: '1px solid var(--gray-200)' }} />{item.color}</span>}
                             {item.size && <span style={{ fontSize: '11px', color: 'var(--gray-500)' }}>Size: {item.size}</span>}
+                            {item.variantName && <span style={{ fontSize: '11px', color: 'var(--gray-500)' }}>Phân loại: {item.variantName}</span>}
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid var(--gray-200)', borderRadius: '8px', overflow: 'hidden' }}>

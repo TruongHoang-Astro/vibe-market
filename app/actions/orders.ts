@@ -12,6 +12,8 @@ export interface NewOrderItem {
   price: number;
   qty: number;
   image: string;
+  variantId?: string;
+  variantName?: string;
 }
 
 export interface NewOrderPayload {
@@ -90,15 +92,20 @@ export async function createOrder(
     } catch (e) { console.error('createOrder (voucher count):', e); }
   }
 
-  const rows = payload.items.map((it) => ({
+  const baseRows = payload.items.map((it) => ({
     order_id: order.id,
     product_id: it.productId,
-    name: it.name,
+    name: it.variantName ? `${it.name} - ${it.variantName}` : it.name,
     qty: it.qty,
     price: it.price,
     image: it.image,
   }));
-  const { error: itemsErr } = await supabase.from('order_items').insert(rows);
+  // Thử kèm variant_id (variants.sql); chưa migrate → fallback không có cột.
+  const rows = payload.items.map((it, i) => ({ ...baseRows[i], variant_id: it.variantId ?? null }));
+  let itemsErr = (await supabase.from('order_items').insert(rows)).error;
+  if (itemsErr) {
+    itemsErr = (await supabase.from('order_items').insert(baseRows)).error;
+  }
   if (itemsErr) {
     console.error('createOrder (items):', itemsErr.message);
     return { error: 'Không lưu được sản phẩm trong đơn' };

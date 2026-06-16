@@ -17,6 +17,13 @@ export interface ProductInput {
   description: string;
   image: string;
   sizeGuide?: { size: string; value: string }[];  // bảng hướng dẫn chọn size
+  variants?: { name: string; price: number; stock: number }[]; // phân loại hàng
+}
+
+function cleanVariants(v?: { name: string; price: number; stock: number }[]) {
+  return (v ?? [])
+    .filter((r) => r.name?.trim())
+    .map((r) => ({ name: r.name.trim(), price: Math.max(0, Math.round(r.price || 0)), stock: Math.max(0, Math.round(r.stock || 0)) }));
 }
 
 async function ctx() {
@@ -51,21 +58,33 @@ export async function createProduct(input: ProductInput): Promise<{ ok?: true; e
   const id = 'p-' + crypto.randomUUID().slice(0, 8);
   const image = input.image || '';
 
+  // Có biến thể → giá hiển thị = min, tồn kho = tổng
+  const variants = cleanVariants(input.variants);
+  const finalPrice = variants.length ? Math.min(...variants.map((v) => v.price)) : selling;
+  const finalStock = variants.length ? variants.reduce((s, v) => s + v.stock, 0) : Math.max(0, Math.round(input.stock || 0));
+  const finalBadge: 'sale' | 'new' = finalPrice < original ? 'sale' : badge;
+
   const { error } = await supabase.from('products').insert({
     id,
     shop_id: shop.id,
     name: input.name.trim(),
-    price: selling,
+    price: finalPrice,
     original_price: original,
     image,
     images: image ? [image] : [],
     category: input.category || 'Tổng hợp',
-    stock: Math.max(0, Math.round(input.stock || 0)),
+    stock: finalStock,
     description: input.description || '',
-    badge,
+    badge: finalBadge,
     ...(cleanGuide(input.sizeGuide).length ? { size_guide: cleanGuide(input.sizeGuide) } : {}),
   });
   if (error) { console.error('createProduct:', error.message); return { error: 'Đăng sản phẩm thất bại' }; }
+
+  // Lưu biến thể (nếu chưa chạy variants.sql thì bỏ qua, không vỡ luồng)
+  if (variants.length) {
+    const { error: vErr } = await supabase.from('product_variants').insert(variants.map((v) => ({ product_id: id, name: v.name, price: v.price, stock: v.stock })));
+    if (vErr) console.error('createProduct (variants):', vErr.message);
+  }
   return { ok: true };
 }
 
@@ -75,14 +94,19 @@ export async function updateProduct(id: string, input: ProductInput): Promise<{ 
   const { supabase, shop } = c;
 
   const { original, selling, badge } = priceFields(input);
+  const variants = cleanVariants(input.variants);
+  const finalPrice = variants.length ? Math.min(...variants.map((v) => v.price)) : selling;
+  const finalStock = variants.length ? variants.reduce((s, v) => s + v.stock, 0) : Math.max(0, Math.round(input.stock || 0));
+  const finalBadge: 'sale' | 'new' = finalPrice < original ? 'sale' : badge;
+
   const patch: ProductUpdate = {
     name: input.name.trim(),
-    price: selling,
+    price: finalPrice,
     original_price: original,
     category: input.category || 'Tổng hợp',
-    stock: Math.max(0, Math.round(input.stock || 0)),
+    stock: finalStock,
     description: input.description || '',
-    badge,
+    badge: finalBadge,
   };
   const guide = cleanGuide(input.sizeGuide);
   if (guide.length) patch.size_guide = guide;
@@ -91,6 +115,14 @@ export async function updateProduct(id: string, input: ProductInput): Promise<{ 
   // .eq shop_id để chắc chắn chỉ sửa SP của shop mình (RLS cũng chặn)
   const { error } = await supabase.from('products').update(patch).eq('id', id).eq('shop_id', shop.id);
   if (error) { console.error('updateProduct:', error.message); return { error: 'Cập nhật thất bại' }; }
+
+  // Đồng bộ biến thể: xóa cũ + thêm mới (đơn giản, đúng) — bỏ qua nếu chưa chạy variants.sql
+  try {
+    await supabase.from('product_variants').delete().eq('product_id', id);
+    if (variants.length) {
+      await supabase.from('product_variants').insert(variants.map((v) => ({ product_id: id, name: v.name, price: v.price, stock: v.stock })));
+    }
+  } catch (e) { console.error('updateProduct (variants):', e); }
   return { ok: true };
 }
 

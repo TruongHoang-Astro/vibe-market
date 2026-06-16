@@ -11,6 +11,8 @@ export interface CartItem {
   quantity: number;
   color?: string;
   size?: string;
+  variantId?: string;
+  variantName?: string;
   shopId: string;
   shopName: string;
 }
@@ -40,7 +42,7 @@ export const useCartStore = create<CartStore>()(
       setVoucher: (code) => set({ voucherCode: code }),
 
       addItem: (item) => {
-        const id = `${item.productId}-${item.color || ''}-${item.size || ''}`;
+        const id = `${item.productId}-${item.variantId || ''}-${item.color || ''}-${item.size || ''}`;
         const existingItem = get().items.find(i => i.id === id);
         if (existingItem) {
           set(state => ({

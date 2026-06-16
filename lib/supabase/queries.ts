@@ -131,6 +131,11 @@ export const getProductById = cache(async (id: string): Promise<Product | null> 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const guide = (sg as any)?.size_guide;
   if (Array.isArray(guide) && guide.length > 0) productObj.sizeGuide = guide;
+  // Biến thể (nếu chưa chạy variants.sql → bảng không tồn tại, bỏ qua)
+  const { data: vrs } = await supabase.from('product_variants').select('id, name, price, stock').eq('product_id', id).order('created_at');
+  if (Array.isArray(vrs) && vrs.length > 0) {
+    productObj.variants = vrs.map((v) => ({ id: v.id as string, name: v.name as string, price: Number(v.price), stock: v.stock as number }));
+  }
   return productObj;
 });
 

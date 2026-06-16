@@ -124,7 +124,7 @@ export default function CheckoutPage() {
     });
     const provider: 'cod' | 'vnpay' = paymentMethod === 'online' ? 'vnpay' : 'cod';
     const { orderId: newId, paymentProvider, error } = await createOrder({
-      items: items.map(i => ({ productId: i.productId, name: i.name, price: i.price, qty: i.quantity, image: i.image })),
+      items: items.map(i => ({ productId: i.productId, name: i.name, price: i.price, qty: i.quantity, image: i.image, variantId: i.variantId, variantName: i.variantName })),
       address: fullAddress,
       shippingMethod,
       paymentProvider: provider,

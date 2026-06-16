@@ -92,6 +92,7 @@ export default function SellerDashboard() {
   const [productForm, setProductForm] = useState({ name: '', category: '', price: '', salePrice: '', stock: '', description: '' });
   const [productImage, setProductImage] = useState('');
   const [sizeGuide, setSizeGuide] = useState<{ size: string; value: string }[]>([]);
+  const [variants, setVariants] = useState<{ name: string; price: string; stock: string }[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -149,10 +150,10 @@ export default function SellerDashboard() {
 
   const resetForm = () => {
     setProductForm({ name: '', category: '', price: '', salePrice: '', stock: '', description: '' });
-    setProductImage(''); setSizeGuide([]); setEditingId(null);
+    setProductImage(''); setSizeGuide([]); setVariants([]); setEditingId(null);
   };
   const openAdd = () => { resetForm(); setShowAddProduct(true); };
-  const openEdit = (p: ReturnType<typeof mapRow>) => {
+  const openEdit = async (p: ReturnType<typeof mapRow>) => {
     setEditingId(p.id);
     setProductForm({
       name: p.name, category: p.category || '',
@@ -162,6 +163,10 @@ export default function SellerDashboard() {
     });
     setProductImage(p.image || '');
     setSizeGuide(p.sizeGuide || []);
+    // Nạp biến thể (nếu có)
+    const { data: vrs } = await createClient().from('product_variants').select('name, price, stock').eq('product_id', p.id).order('created_at');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setVariants(((vrs ?? []) as any[]).map((v) => ({ name: v.name, price: String(v.price), stock: String(v.stock) })));
     setShowAddProduct(true);
   };
 
@@ -189,6 +194,7 @@ export default function SellerDashboard() {
       salePrice: productForm.salePrice ? Number(productForm.salePrice) : undefined,
       stock: Number(productForm.stock || 0),
       description: productForm.description, image: productImage, sizeGuide,
+      variants: variants.map((v) => ({ name: v.name, price: Number(v.price || 0), stock: Number(v.stock || 0) })),
     };
     const res = editingId ? await updateProduct(editingId, input) : await createProduct(input);
     setSubmitting(false);
@@ -821,6 +827,25 @@ export default function SellerDashboard() {
                       <button type="button" onClick={() => setSizeGuide([...sizeGuide, { size: '', value: '' }])} style={{ alignSelf: 'flex-start', padding: '8px 14px', border: '1.5px dashed #e5e7eb', borderRadius: '8px', background: 'white', color: '#374151', cursor: 'pointer', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}><Plus size={14} /> Thêm dòng size</button>
                     </div>
                     <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px' }}>Hiện thành bảng &quot;Hướng dẫn chọn size&quot; ở trang sản phẩm.</p>
+                  </div>
+
+                  {/* Phân loại hàng (biến thể) */}
+                  <div>
+                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '8px' }}>Phân loại hàng (tuỳ chọn — giá &amp; tồn kho riêng)</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {variants.map((row, i) => (
+                        <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <input value={row.name} onChange={e => setVariants(variants.map((r, idx) => idx === i ? { ...r, name: e.target.value } : r))} placeholder="Phân loại (vd: Đỏ / M)" className="input-base" style={{ flex: 1.6 }} />
+                          <input type="number" value={row.price} onChange={e => setVariants(variants.map((r, idx) => idx === i ? { ...r, price: e.target.value } : r))} placeholder="Giá" className="input-base" style={{ flex: 1 }} min="0" />
+                          <input type="number" value={row.stock} onChange={e => setVariants(variants.map((r, idx) => idx === i ? { ...r, stock: e.target.value } : r))} placeholder="Kho" className="input-base" style={{ flex: 0.8 }} min="0" />
+                          <button type="button" onClick={() => setVariants(variants.filter((_, idx) => idx !== i))} style={{ padding: '9px', border: '1px solid #fee2e2', borderRadius: '8px', background: '#fff5f5', color: '#dc2626', cursor: 'pointer', flexShrink: 0 }}><Trash2 size={15} /></button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => setVariants([...variants, { name: '', price: '', stock: '' }])} style={{ alignSelf: 'flex-start', padding: '8px 14px', border: '1.5px dashed #e5e7eb', borderRadius: '8px', background: 'white', color: '#374151', cursor: 'pointer', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}><Plus size={14} /> Thêm phân loại</button>
+                    </div>
+                    {variants.length > 0 && (
+                      <p style={{ fontSize: '12px', color: '#d97706', marginTop: '6px' }}>Khi có phân loại: giá hiển thị = thấp nhất, tồn kho = tổng (ô Giá gốc/Tồn kho phía trên sẽ bị ghi đè).</p>
+                    )}
                   </div>
 
                   {productForm.price && productForm.salePrice && Number(productForm.salePrice) < Number(productForm.price) && (

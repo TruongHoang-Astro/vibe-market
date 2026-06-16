@@ -22,6 +22,8 @@ export interface Product {
   isFlashSale?: boolean;
   flashSalePrice?: number;
   sizeGuide?: { size: string; value: string }[];
+  // Biến thể (phân loại hàng) — giá + tồn kho riêng. Có sau khi chạy variants.sql.
+  variants?: { id: string; name: string; price: number; stock: number }[];
 }
 
 export interface Shop {

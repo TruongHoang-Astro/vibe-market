@@ -141,6 +141,7 @@ export default function CartPage() {
                         <div style={{ display: 'flex', gap: '12px' }}>
                           {item.color && <span style={{ fontSize: '12px', color: 'var(--gray-500)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', borderRadius: '50%', background: item.color, display: 'inline-block', border: '1px solid var(--gray-200)' }} /> {item.color}</span>}
                           {item.size && <span style={{ fontSize: '12px', color: 'var(--gray-500)' }}>Size: {item.size}</span>}
+                          {item.variantName && <span style={{ fontSize: '12px', color: 'var(--gray-500)' }}>Phân loại: {item.variantName}</span>}
                         </div>
                       </div>
                       {/* Price */}

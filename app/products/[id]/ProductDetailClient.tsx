@@ -31,6 +31,7 @@ export default function ProductDetailClient({
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || null);
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || null);
+  const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] ?? null);
   const [quantity, setQuantity] = useState(1);
   const [addedAnimation, setAddedAnimation] = useState(false);
   const [descOpen, setDescOpen] = useState(false);
@@ -85,9 +86,14 @@ export default function ProductDetailClient({
     router.refresh(); // cập nhật rating/số đánh giá tổng hợp (trigger DB)
   };
 
+  const hasVariants = !!product.variants?.length;
+  const effPrice = selectedVariant ? selectedVariant.price : product.price;
+  const effStock = selectedVariant ? selectedVariant.stock : product.stock;
+
   const buildCartItem = () => ({
-    productId: product.id, name: product.name, price: product.price, image: product.image,
+    productId: product.id, name: product.name, price: effPrice, image: product.image,
     quantity, color: selectedColor || undefined, size: selectedSize || undefined,
+    variantId: selectedVariant?.id, variantName: selectedVariant?.name,
     shopId: product.shopId, shopName: product.shopName,
   });
 
@@ -105,7 +111,7 @@ export default function ProductDetailClient({
   const handleBuyNow = () => { addItem(buildCartItem()); router.push('/checkout'); };
   const handleChat = () => openChat(product.shopId, product.shopName, shop?.logo || '');
 
-  const discount = Math.round((1 - product.price / product.originalPrice) * 100);
+  const discount = product.originalPrice > 0 ? Math.round((1 - effPrice / product.originalPrice) * 100) : 0;
   const badgeLabel = product.badge === 'sale' ? 'SALE' : product.badge === 'new' ? 'MỚI' : product.badge === 'hot' ? 'HOT' : product.badge === 'bestseller' ? 'BÁN CHẠY' : '';
 
   return (
@@ -185,7 +191,7 @@ export default function ProductDetailClient({
             {/* Price block */}
             <div style={{ background: 'linear-gradient(135deg, #fff1f2, #fff5f5)', border: '1px solid rgba(239,68,68,0.12)', borderRadius: 'var(--radius-lg)', padding: '18px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '30px', fontWeight: 800, color: 'var(--primary)', lineHeight: 1 }}>{formatPrice(product.price)}</span>
+                <span style={{ fontSize: '30px', fontWeight: 800, color: 'var(--primary)', lineHeight: 1 }}>{formatPrice(effPrice)}</span>
                 {discount > 0 && (
                   <>
                     <span style={{ fontSize: '15px', color: 'var(--gray-400)', textDecoration: 'line-through' }}>{formatPrice(product.originalPrice)}</span>
@@ -193,7 +199,7 @@ export default function ProductDetailClient({
                   </>
                 )}
               </div>
-              {discount > 0 && <p style={{ fontSize: '13px', color: 'var(--primary)', fontWeight: 600, marginTop: '6px' }}>🎉 Tiết kiệm {formatPrice(product.originalPrice - product.price)}</p>}
+              {discount > 0 && <p style={{ fontSize: '13px', color: 'var(--primary)', fontWeight: 600, marginTop: '6px' }}>🎉 Tiết kiệm {formatPrice(product.originalPrice - effPrice)}</p>}
               {(product.badge === 'hot' || product.badge === 'bestseller') && (
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '10px', background: 'rgba(239,68,68,0.08)', color: 'var(--primary)', fontSize: '12.5px', fontWeight: 700, padding: '4px 12px', borderRadius: '8px' }}>
                   🏆 Top bán chạy trong {product.category}
@@ -203,6 +209,23 @@ export default function ProductDetailClient({
 
             {/* Variants + quantity */}
             <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              {hasVariants && (
+                <div>
+                  <div style={{ fontSize: '13.5px', fontWeight: 600, marginBottom: '10px', color: 'var(--gray-700)' }}>Phân loại: <span style={{ color: 'var(--black)' }}>{selectedVariant?.name || 'Chưa chọn'}</span></div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {product.variants!.map((v) => {
+                      const active = selectedVariant?.id === v.id;
+                      const out = v.stock <= 0;
+                      return (
+                        <button key={v.id} onClick={() => !out && setSelectedVariant(v)} disabled={out}
+                          style={{ padding: '8px 14px', border: `1.5px solid ${active ? 'var(--primary)' : 'var(--gray-200)'}`, borderRadius: '8px', background: active ? 'rgba(239,68,68,0.06)' : 'white', color: out ? 'var(--gray-300)' : active ? 'var(--primary)' : 'var(--gray-700)', fontWeight: active ? 700 : 500, cursor: out ? 'not-allowed' : 'pointer', fontSize: '14px', textDecoration: out ? 'line-through' : 'none', transition: 'all 0.2s' }}>
+                          {v.name} · {formatPrice(v.price)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               {product.colors && product.colors.length > 0 && (
                 <div>
                   <div style={{ fontSize: '13.5px', fontWeight: 600, marginBottom: '10px', color: 'var(--gray-700)' }}>Màu sắc: <span style={{ color: 'var(--black)' }}>{selectedColor || 'Chưa chọn'}</span></div>
@@ -230,9 +253,9 @@ export default function ProductDetailClient({
                 <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid var(--gray-200)', borderRadius: '10px', overflow: 'hidden' }}>
                   <button onClick={() => setQuantity(q => Math.max(1, q - 1))} style={{ padding: '8px 14px', background: 'var(--gray-50)', border: 'none', cursor: 'pointer', color: 'var(--gray-600)' }}><Minus size={15} /></button>
                   <span style={{ padding: '8px 18px', fontWeight: 700, fontSize: '15px', minWidth: '50px', textAlign: 'center' }}>{quantity}</span>
-                  <button onClick={() => setQuantity(q => Math.min(product.stock, q + 1))} style={{ padding: '8px 14px', background: 'var(--gray-50)', border: 'none', cursor: 'pointer', color: 'var(--gray-600)' }}><Plus size={15} /></button>
+                  <button onClick={() => setQuantity(q => Math.min(Math.max(1, effStock), q + 1))} style={{ padding: '8px 14px', background: 'var(--gray-50)', border: 'none', cursor: 'pointer', color: 'var(--gray-600)' }}><Plus size={15} /></button>
                 </div>
-                <span style={{ fontSize: '12.5px', color: 'var(--gray-400)' }}>Còn {product.stock} sp</span>
+                <span style={{ fontSize: '12.5px', color: 'var(--gray-400)' }}>Còn {effStock} sp</span>
               </div>
 
               {/* Inline actions (desktop) */}
@@ -485,7 +508,7 @@ export default function ProductDetailClient({
         </button>
         <button onClick={handleBuyNow} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px', background: 'linear-gradient(135deg, var(--primary), var(--primary-light))', border: 'none', color: 'white', cursor: 'pointer', fontWeight: 700 }}>
           <span style={{ fontSize: '15px' }}>Mua ngay</span>
-          <span style={{ fontSize: '12px', opacity: 0.9 }}>{formatPrice(product.price)}</span>
+          <span style={{ fontSize: '12px', opacity: 0.9 }}>{formatPrice(effPrice)}</span>
         </button>
       </div>
     </div>
