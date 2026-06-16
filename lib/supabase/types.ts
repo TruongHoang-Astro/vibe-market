@@ -489,6 +489,24 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['product_variants']['Insert']>;
         Relationships: [];
       };
+      order_status_history: {
+        Row: {
+          id: string;
+          order_id: string;
+          status: string;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          status: string;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['order_status_history']['Insert']>;
+        Relationships: [];
+      };
       product_questions: {
         Row: {
           id: string;

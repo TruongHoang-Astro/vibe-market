@@ -52,6 +52,7 @@ export default function OrdersClient({ orders, loggedIn }: { orders: Order[]; lo
   const [paying, setPaying] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [returns, setReturns] = useState<Record<string, string>>({}); // orderId → status
+  const [openTrack, setOpenTrack] = useState<Record<string, boolean>>({});
   const { openChat } = useChatStore();
 
   // Review modal
@@ -271,6 +272,36 @@ export default function OrdersClient({ orders, loggedIn }: { orders: Order[]; lo
                             </div>
                           ))}
                         </div>
+
+                        {/* Tracking timeline */}
+                        {order.tracking && order.tracking.length > 0 && (
+                          <div style={{ padding: '0 20px 14px' }}>
+                            <button onClick={() => setOpenTrack(prev => ({ ...prev, [order.id]: !prev[order.id] }))}
+                              style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontWeight: 600, fontSize: '13px', padding: '4px 0' }}>
+                              <Truck size={14} /> Theo dõi đơn hàng {openTrack[order.id] ? '▲' : '▼'}
+                            </button>
+                            {openTrack[order.id] && (
+                              <div style={{ marginTop: '10px', paddingLeft: '8px' }}>
+                                {order.tracking.map((t, ti) => {
+                                  const tc = statusConfig[t.status];
+                                  const last = ti === order.tracking!.length - 1;
+                                  return (
+                                    <div key={ti} style={{ display: 'flex', gap: '12px' }}>
+                                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: last ? 'var(--primary)' : 'var(--gray-300)', flexShrink: 0, marginTop: '3px' }} />
+                                        {!last && <div style={{ width: '2px', flex: 1, minHeight: '22px', background: 'var(--gray-200)' }} />}
+                                      </div>
+                                      <div style={{ paddingBottom: last ? 0 : '12px' }}>
+                                        <div style={{ fontSize: '13px', fontWeight: 600, color: last ? 'var(--primary)' : 'var(--gray-700)' }}>{tc?.label ?? t.status}</div>
+                                        <div style={{ fontSize: '12px', color: 'var(--gray-400)' }}>{new Date(t.date).toLocaleString('vi-VN')}</div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         {/* Order footer */}
                         <div style={{ padding: '14px 20px', borderTop: '1px solid var(--gray-100)', background: 'var(--gray-50)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>

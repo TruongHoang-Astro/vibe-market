@@ -78,6 +78,7 @@ export interface Order {
   shippingFee?: number;
   paymentProvider?: string;          // cod | vnpay | mock
   paymentStatus?: string;            // unpaid | pending | paid | failed
+  tracking?: { status: string; note: string | null; date: string }[]; // lịch sử trạng thái
 }
 
 export interface Category {

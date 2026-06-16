@@ -414,5 +414,23 @@ export async function getMyOrders(): Promise<Order[]> {
       if (info) { o.shopId = info.shopId; o.shopName = info.name; o.shopLogo = info.logo; }
     }
   }
+
+  // Lịch sử trạng thái (timeline) — resilient nếu chưa chạy tracking.sql
+  const orderIds = orders.map((o) => o.id);
+  if (orderIds.length) {
+    const { data: hist } = await supabase
+      .from('order_status_history').select('order_id, status, note, created_at')
+      .in('order_id', orderIds).order('created_at', { ascending: true });
+    if (hist) {
+      const byOrder = new Map<string, { status: string; note: string | null; date: string }[]>();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const h of hist as any[]) {
+        const arr = byOrder.get(h.order_id) ?? [];
+        arr.push({ status: h.status, note: h.note ?? null, date: h.created_at });
+        byOrder.set(h.order_id, arr);
+      }
+      for (const o of orders) o.tracking = byOrder.get(o.id);
+    }
+  }
   return orders;
 }

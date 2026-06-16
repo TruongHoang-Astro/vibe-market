@@ -341,6 +341,11 @@
   chủ shop thấy ô **Trả lời** ngay dưới câu chưa đáp (page tính `isShopOwner`).
 - Build xanh 19 routes; smoke test SP hiện mục Hỏi & Đáp + empty state (chưa migrate → log resilient, không vỡ).
 
+### 13) NEXT-3: Timeline theo dõi đơn hàng (16/06/2026)
+- `supabase/tracking.sql`: bảng `order_status_history` + trigger ghi lịch sử khi tạo đơn / đổi trạng thái + backfill đơn cũ. RLS đọc đơn của mình.
+- `getMyOrders` gắn `tracking[]` (resilient). `/orders`: nút **"Theo dõi đơn hàng"** mở timeline (chấm tròn + nhãn trạng thái + mốc thời gian).
+- Build xanh 19 routes.
+
 ---
 
 ## Lộ trình đề xuất
