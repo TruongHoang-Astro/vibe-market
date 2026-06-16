@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, TrendingUp, Settings,
   Bell, Plus, Edit3, Trash2, Eye, Search,
   Upload, X, Check, Star, Zap, LogOut, LogIn,
-  ArrowUpRight, ArrowDownRight, DollarSign, Tag, MessageCircle, User, Store, Camera, Menu, Undo2,
+  ArrowUpRight, ArrowDownRight, DollarSign, Tag, MessageCircle, User, Store, Camera, Menu, Undo2, Wallet,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -20,6 +20,8 @@ import { createProduct, updateProduct, deleteProduct, updateShop, getShopOrders,
 import type { SellerOrder, SellerStats } from '@/app/actions/seller';
 import { getShopReturns, resolveReturn } from '@/app/actions/returns';
 import type { ShopReturn } from '@/app/actions/returns';
+import { getSellerFinance, requestWithdrawal } from '@/app/actions/payout';
+import type { SellerFinance } from '@/app/actions/payout';
 import { uploadChatMedia } from '@/app/actions/chat';
 import SellerChat from './SellerChat';
 
@@ -30,6 +32,7 @@ const navItems = [
   { key: 'orders', label: 'Đơn hàng', icon: <ShoppingBag size={18} /> },
   { key: 'returns', label: 'Trả hàng', icon: <Undo2 size={18} /> },
   { key: 'revenue', label: 'Doanh thu', icon: <TrendingUp size={18} /> },
+  { key: 'payout', label: 'Số dư & Rút tiền', icon: <Wallet size={18} /> },
   { key: 'settings', label: 'Cài đặt', icon: <Settings size={18} /> },
 ];
 
@@ -121,6 +124,9 @@ export default function SellerDashboard() {
   const [sellerOrders, setSellerOrders] = useState<SellerOrder[]>([]);
   const [stats, setStats] = useState<SellerStats>({ totalRevenue: 0, totalOrders: 0, monthly: [] });
   const [returns, setReturns] = useState<ShopReturn[]>([]);
+  const [finance, setFinance] = useState<SellerFinance | null>(null);
+  const [wForm, setWForm] = useState({ amount: '', bankName: '', bankAccount: '', accountName: '' });
+  const [wSubmitting, setWSubmitting] = useState(false);
 
   const loadData = async () => {
     if (!user) { setLoadingShop(false); return; }
@@ -146,8 +152,19 @@ export default function SellerDashboard() {
       setStats(st);
       const { returns: rr } = await getShopReturns();
       setReturns(rr);
+      setFinance(await getSellerFinance());
     }
     setLoadingShop(false);
+  };
+
+  const handleWithdraw = async () => {
+    setWSubmitting(true);
+    const res = await requestWithdrawal({ amount: Number(wForm.amount || 0), bankName: wForm.bankName, bankAccount: wForm.bankAccount, accountName: wForm.accountName });
+    setWSubmitting(false);
+    if (res.error) { toast.error(res.error); return; }
+    toast.success('Đã gửi yêu cầu rút tiền');
+    setWForm({ amount: '', bankName: '', bankAccount: '', accountName: '' });
+    loadData();
   };
 
   const handleResolveReturn = async (id: string, status: 'approved' | 'rejected') => {
@@ -648,6 +665,61 @@ export default function SellerDashboard() {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
+            </div>
+          )}
+
+          {/* ── SỐ DƯ & RÚT TIỀN ── */}
+          {activeTab === 'payout' && finance && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '720px' }}>
+              <div className="dash-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                {[
+                  { label: 'Số dư khả dụng', val: formatPrice(finance.balance), color: '#16a34a' },
+                  { label: `Đã nhận (sau ${Math.round(finance.commissionRate * 100)}% hoa hồng)`, val: formatPrice(finance.earnings), color: '#2563eb' },
+                  { label: 'Đã/đang rút', val: formatPrice(finance.withdrawn), color: '#f59e0b' },
+                ].map((s, i) => (
+                  <div key={i} style={{ background: 'white', borderRadius: '14px', padding: '20px', border: '1px solid #e5e7eb' }}>
+                    <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>{s.label}</div>
+                    <div style={{ fontSize: '22px', fontWeight: 800, color: s.color }}>{s.val}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="dash-table-card" style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', padding: '24px' }}>
+                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', fontWeight: 700, marginBottom: '16px' }}>Yêu cầu rút tiền</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <input type="number" value={wForm.amount} onChange={e => setWForm({ ...wForm, amount: e.target.value })} placeholder={`Số tiền (tối đa ${formatPrice(finance.balance)})`} className="input-base" min="0" />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <input value={wForm.bankName} onChange={e => setWForm({ ...wForm, bankName: e.target.value })} placeholder="Ngân hàng (vd: Vietcombank)" className="input-base" />
+                    <input value={wForm.accountName} onChange={e => setWForm({ ...wForm, accountName: e.target.value })} placeholder="Tên chủ tài khoản" className="input-base" />
+                  </div>
+                  <input value={wForm.bankAccount} onChange={e => setWForm({ ...wForm, bankAccount: e.target.value })} placeholder="Số tài khoản" className="input-base" />
+                  <button onClick={handleWithdraw} disabled={wSubmitting || finance.balance <= 0} className="btn-primary" style={{ alignSelf: 'flex-start', borderRadius: '10px', opacity: wSubmitting || finance.balance <= 0 ? 0.6 : 1 }}>
+                    <Wallet size={16} /> <span>{wSubmitting ? 'Đang gửi...' : 'Yêu cầu rút tiền'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="dash-table-card" style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                <div style={{ padding: '16px 24px', borderBottom: '1px solid #f3f4f6', fontWeight: 700 }}>Lịch sử rút tiền</div>
+                {finance.withdrawals.length === 0 ? (
+                  <div style={{ padding: '40px', textAlign: 'center', color: '#9ca3af' }}>Chưa có yêu cầu rút tiền nào.</div>
+                ) : (
+                  <table className="table-base">
+                    <thead><tr><th>Số tiền</th><th>Ngân hàng</th><th>Trạng thái</th><th>Ngày</th></tr></thead>
+                    <tbody>
+                      {finance.withdrawals.map(w => (
+                        <tr key={w.id}>
+                          <td style={{ fontWeight: 700, color: '#ef4444' }}>{formatPrice(w.amount)}</td>
+                          <td style={{ fontSize: '13px' }}>{w.bankName} · {w.bankAccount}</td>
+                          <td><span style={{ padding: '3px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: 700, background: w.status === 'pending' ? '#fef3c7' : w.status === 'approved' ? '#f0fdf4' : '#fee2e2', color: w.status === 'pending' ? '#d97706' : w.status === 'approved' ? '#16a34a' : '#dc2626' }}>{w.status === 'pending' ? 'Chờ duyệt' : w.status === 'approved' ? 'Đã chuyển' : 'Từ chối'}</span></td>
+                          <td style={{ color: '#6b7280', fontSize: '13px' }}>{new Date(w.date).toLocaleDateString('vi-VN')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+              <p style={{ fontSize: '12px', color: '#9ca3af' }}>Cần chạy <code>supabase/payout.sql</code> để dùng tính năng này. Số dư = doanh thu đơn đã giao trừ {Math.round(finance.commissionRate * 100)}% hoa hồng.</p>
             </div>
           )}
 

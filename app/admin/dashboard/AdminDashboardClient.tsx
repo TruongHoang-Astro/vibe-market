@@ -1,13 +1,13 @@
 'use client';
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   LayoutDashboard, Users, Store, Package, ShoppingBag, Settings, Zap, LogOut, Bell,
   Search, ArrowUpRight, Shield, CheckCircle2, XCircle, AlertTriangle, Eye, Trash2,
-  DollarSign, Star, Menu, Flag, Lock, Unlock, ShieldCheck,
+  DollarSign, Star, Menu, Flag, Lock, Unlock, ShieldCheck, Wallet,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -20,6 +20,7 @@ import {
   adminDeleteProduct, adminDeleteReview, resolveReport,
   type AdminDashboardData,
 } from '@/app/actions/admin';
+import { getAdminWithdrawals, resolveWithdrawal, type AdminWithdrawal } from '@/app/actions/payout';
 
 const statusColors: Record<string, { bg: string; color: string; label: string }> = {
   pending: { bg: '#fef9c3', color: '#a16207', label: 'Chờ xác nhận' },
@@ -43,6 +44,20 @@ export default function AdminDashboardClient({ data }: { data: AdminDashboardDat
   const [userFilter, setUserFilter] = useState<'all' | 'buyer' | 'seller' | 'banned'>('all');
   const [userSearch, setUserSearch] = useState('');
   const [productSearch, setProductSearch] = useState('');
+  const [withdrawals, setWithdrawals] = useState<AdminWithdrawal[]>([]);
+
+  const loadWithdrawals = () => { getAdminWithdrawals().then(({ items }) => setWithdrawals(items)).catch(() => {}); };
+  useEffect(() => { loadWithdrawals(); }, []);
+  const resolveW = async (id: string, status: 'approved' | 'rejected') => {
+    if (busy) return;
+    setBusy(true);
+    const res = await resolveWithdrawal(id, status);
+    setBusy(false);
+    if (res.error) { toast.error(res.error); return; }
+    toast.success(status === 'approved' ? 'Đã duyệt rút tiền' : 'Đã từ chối');
+    loadWithdrawals();
+  };
+  const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending').length;
 
   const navItems = [
     { key: 'dashboard', label: 'Tổng quan', icon: <LayoutDashboard size={18} />, badge: 0 },
@@ -51,6 +66,7 @@ export default function AdminDashboardClient({ data }: { data: AdminDashboardDat
     { key: 'products', label: 'Sản phẩm', icon: <Package size={18} />, badge: 0 },
     { key: 'orders', label: 'Đơn hàng', icon: <ShoppingBag size={18} />, badge: 0 },
     { key: 'reports', label: 'Kiểm duyệt', icon: <Flag size={18} />, badge: overview.openReports },
+    { key: 'payouts', label: 'Rút tiền', icon: <Wallet size={18} />, badge: pendingWithdrawals },
     { key: 'settings', label: 'Cài đặt', icon: <Settings size={18} />, badge: 0 },
   ];
 
@@ -530,6 +546,45 @@ export default function AdminDashboardClient({ data }: { data: AdminDashboardDat
                               </>
                             )}
                           </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          {/* ── PAYOUTS (Rút tiền) ── */}
+          {activeTab === 'payouts' && (
+            <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h3 style={{ fontWeight: 700, fontSize: '16px', color: '#0f172a' }}>Yêu cầu rút tiền của người bán</h3>
+                <span style={{ background: '#fef3c7', color: '#d97706', fontSize: '12px', fontWeight: 700, padding: '3px 10px', borderRadius: '99px' }}>{pendingWithdrawals} chờ duyệt</span>
+              </div>
+              {withdrawals.length === 0 ? (
+                <div style={{ padding: '60px', textAlign: 'center', color: '#94a3b8' }}>
+                  <Wallet size={40} style={{ marginBottom: '12px', opacity: 0.4 }} />
+                  <p style={{ fontWeight: 600 }}>Chưa có yêu cầu rút tiền</p>
+                </div>
+              ) : (
+                <table className="table-base">
+                  <thead><tr><th>Gian hàng</th><th>Số tiền</th><th>Ngân hàng</th><th>Trạng thái</th><th>Ngày</th><th>Thao tác</th></tr></thead>
+                  <tbody>
+                    {withdrawals.map(w => (
+                      <tr key={w.id}>
+                        <td style={{ fontWeight: 600, fontSize: '13px', color: '#ef4444' }}>{w.shopName}</td>
+                        <td style={{ fontWeight: 700 }}>{formatPrice(w.amount)}</td>
+                        <td style={{ fontSize: '13px', color: '#475569' }}>{w.bankName} · {w.bankAccount}<br /><span style={{ color: '#94a3b8' }}>{w.accountName}</span></td>
+                        <td><span style={{ padding: '3px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: 700, background: w.status === 'pending' ? '#fef3c7' : w.status === 'approved' ? '#f0fdf4' : '#fee2e2', color: w.status === 'pending' ? '#d97706' : w.status === 'approved' ? '#16a34a' : '#dc2626' }}>{w.status === 'pending' ? 'Chờ duyệt' : w.status === 'approved' ? 'Đã chuyển' : 'Từ chối'}</span></td>
+                        <td style={{ color: '#64748b', fontSize: '13px' }}>{new Date(w.date).toLocaleDateString('vi-VN')}</td>
+                        <td>
+                          {w.status === 'pending' && (
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button disabled={busy} onClick={() => resolveW(w.id, 'approved')} style={{ padding: '6px 12px', border: 'none', borderRadius: '8px', background: '#16a34a', color: 'white', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>Duyệt</button>
+                              <button disabled={busy} onClick={() => resolveW(w.id, 'rejected')} style={{ padding: '6px 12px', border: '1.5px solid #fecaca', borderRadius: '8px', background: '#fff5f5', color: '#dc2626', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>Từ chối</button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}

@@ -352,6 +352,16 @@
 - `components/product/PersonalizedRows.tsx` (2 hàng cuộn ngang) mount ở HomeClient.
 - Build xanh 19 routes; smoke test home hiện 2 hàng (recs từ DB, không cần migration), không lỗi.
 
+### 15) NEXT-5: Số dư & Rút tiền người bán + hoa hồng nền tảng (16/06/2026) — HOÀN TẤT NEXT
+- `supabase/payout.sql`: bảng `withdrawals` + RLS (seller own); `lib/commission.ts` (hoa hồng 5%).
+- `app/actions/payout.ts`: `getSellerFinance` (số dư = doanh thu đơn ĐÃ GIAO × (1−5%) − đã/đang rút) + `requestWithdrawal`
+  + admin `getAdminWithdrawals`/`resolveWithdrawal` (notify chủ shop). Resilient.
+- Seller dashboard: tab **"Số dư & Rút tiền"** (3 thẻ số dư/đã nhận/đã rút + form rút + lịch sử).
+- Admin dashboard: tab **"Rút tiền"** (duyệt/từ chối yêu cầu, badge số chờ).
+- Build xanh 19 routes.
+
+**✅ NEXT tier HOÀN TẤT**: flash sale countdown, timeline theo dõi, Q&A, đã-xem/gợi-ý, payout+hoa hồng.
+
 ---
 
 ## Lộ trình đề xuất

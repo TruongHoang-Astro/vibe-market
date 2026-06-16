@@ -489,6 +489,32 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['product_variants']['Insert']>;
         Relationships: [];
       };
+      withdrawals: {
+        Row: {
+          id: string;
+          shop_id: string;
+          amount: number;
+          bank_name: string;
+          bank_account: string;
+          account_name: string;
+          status: string;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          amount: number;
+          bank_name?: string;
+          bank_account?: string;
+          account_name?: string;
+          status?: string;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['withdrawals']['Insert']>;
+        Relationships: [];
+      };
       order_status_history: {
         Row: {
           id: string;
