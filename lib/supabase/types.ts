@@ -316,6 +316,7 @@ export interface Database {
           recipient: string;
           phone: string;
           address: string;
+          ward: string | null;
           district: string | null;
           province: string;
           is_default: boolean;
@@ -327,6 +328,7 @@ export interface Database {
           recipient: string;
           phone: string;
           address: string;
+          ward?: string | null;
           district?: string | null;
           province: string;
           is_default?: boolean;

@@ -283,6 +283,18 @@
 - `.env.example`: `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `VNPAY_URL` (tuỳ chọn — trống thì dùng cổng giả lập).
 - Build xanh 19 routes; smoke test: checkout hiện ship 30k/60k/100k + COD/VNPay, tổng 280k đúng (server-computed); cổng giả lập render OK.
 
+### 7) Sổ địa chỉ verify + chọn nhanh khi checkout (16/06/2026)
+- `supabase/address.sql`: thêm cột `addresses.ward` (Phường/Xã). Code resilient (saveAddress fallback nếu chưa migrate).
+- **Verify địa chỉ thật**: `lib/vn-address.ts` đọc dữ liệu hành chính VN chính thức (provinces.open-api.vn — 63 tỉnh,
+  có CORS). `components/address/AddressForm.tsx` (tái dùng): cascading **Tỉnh → Huyện → Xã** (chỉ chọn được đơn vị
+  có thật) + validate SĐT di động VN + số nhà/đường. Tự **fallback nhập tay** nếu API không truy cập được.
+- `lib/save-address.ts`: lưu địa chỉ (client, RLS own) resilient (bỏ `ward` nếu cột chưa tồn tại).
+- **Sổ địa chỉ** `/profile/address`: dùng AddressForm (verify) + hiện Phường/Xã.
+- **Checkout** giữ bước "Địa chỉ giao hàng" nhưng **chọn nhanh** 1 trong các địa chỉ đã lưu (radio card, mặc định
+  được chọn sẵn) — không cần nhập tay mỗi lần. "Giao đến địa chỉ khác" → AddressForm (lưu vào sổ + tự sang bước ship).
+  Chưa đăng nhập → nhắc đăng nhập. Đơn lưu địa chỉ đầy đủ (người nhận + SĐT + Phường/Xã) qua `formatFullAddress`.
+- Build xanh 19 routes; smoke test: dataset API 63 tỉnh OK, checkout step 0 hiện picker (login-gated) + link "Quản lý sổ địa chỉ".
+
 ---
 
 ## Lộ trình đề xuất

@@ -3,17 +3,16 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { MapPin, Plus, Trash2, Edit3, Check, X, LogIn, Star, ChevronRight, Phone, User } from 'lucide-react';
+import { MapPin, Plus, Trash2, Edit3, X, LogIn, Star, ChevronRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/supabase/use-user';
+import AddressForm, { type AddressValue } from '@/components/address/AddressForm';
+import { saveAddress } from '@/lib/save-address';
 
 interface Address {
   id: string; recipient: string; phone: string; address: string;
-  district: string | null; province: string; is_default: boolean;
+  ward: string | null; district: string | null; province: string; is_default: boolean;
 }
-
-const provinces = ['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Hải Phòng', 'Biên Hòa', 'Nha Trang', 'Huế'];
-const emptyForm = { recipient: '', phone: '', address: '', district: '', province: '', is_default: false };
 
 export default function AddressPage() {
   const { user, loading } = useUser();
@@ -21,7 +20,7 @@ export default function AddressPage() {
   const [loadingList, setLoadingList] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState(emptyForm);
+  const [editingInitial, setEditingInitial] = useState<Partial<AddressValue> | undefined>(undefined);
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
@@ -33,33 +32,18 @@ export default function AddressPage() {
   };
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user]);
 
-  const openAdd = () => { setForm(emptyForm); setEditingId(null); setShowForm(true); };
+  const openAdd = () => { setEditingInitial(undefined); setEditingId(null); setShowForm(true); };
   const openEdit = (a: Address) => {
-    setForm({ recipient: a.recipient, phone: a.phone, address: a.address, district: a.district ?? '', province: a.province, is_default: a.is_default });
+    setEditingInitial({ recipient: a.recipient, phone: a.phone, address: a.address, ward: a.ward ?? '', district: a.district ?? '', province: a.province, is_default: a.is_default });
     setEditingId(a.id); setShowForm(true);
   };
 
-  const save = async () => {
+  const handleSave = async (v: AddressValue) => {
     if (!user) return;
-    if (!form.recipient.trim() || !form.phone.trim() || !form.address.trim() || !form.province) {
-      toast.error('Vui lòng điền đủ tên, SĐT, địa chỉ, tỉnh/thành'); return;
-    }
     setSaving(true);
-    const supabase = createClient();
-    // Nếu đặt mặc định → bỏ mặc định các địa chỉ khác
-    if (form.is_default) {
-      await supabase.from('addresses').update({ is_default: false }).eq('user_id', user.id);
-    }
-    const payload = {
-      user_id: user.id, recipient: form.recipient.trim(), phone: form.phone.trim(),
-      address: form.address.trim(), district: form.district.trim() || null,
-      province: form.province, is_default: form.is_default,
-    };
-    const { error } = editingId
-      ? await supabase.from('addresses').update(payload).eq('id', editingId)
-      : await supabase.from('addresses').insert(payload);
+    const { error } = await saveAddress(user.id, v, editingId);
     setSaving(false);
-    if (error) { toast.error('Lưu thất bại: ' + error.message); return; }
+    if (error) { toast.error('Lưu thất bại: ' + error); return; }
     toast.success(editingId ? 'Đã cập nhật địa chỉ' : 'Đã thêm địa chỉ');
     setShowForm(false); load();
   };
@@ -126,7 +110,7 @@ export default function AddressPage() {
                       {a.is_default && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: 'rgba(239,68,68,0.08)', color: 'var(--primary)', fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '99px' }}><Star size={10} fill="var(--primary)" /> Mặc định</span>}
                     </div>
                     <p style={{ fontSize: '14px', color: 'var(--gray-600)', lineHeight: 1.5 }}>
-                      {a.address}{a.district ? `, ${a.district}` : ''}, {a.province}
+                      {a.address}{a.ward ? `, ${a.ward}` : ''}{a.district ? `, ${a.district}` : ''}, {a.province}
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
@@ -154,33 +138,13 @@ export default function AddressPage() {
                 <h2 style={{ fontFamily: 'Playfair Display', fontSize: '20px', fontWeight: 800 }}>{editingId ? 'Sửa địa chỉ' : 'Thêm địa chỉ'}</h2>
                 <button onClick={() => setShowForm(false)} style={{ background: 'var(--gray-100)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div style={{ position: 'relative' }}>
-                    <User size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
-                    <input value={form.recipient} onChange={e => setForm({ ...form, recipient: e.target.value })} placeholder="Họ tên người nhận" className="input-base" style={{ paddingLeft: '36px' }} />
-                  </div>
-                  <div style={{ position: 'relative' }}>
-                    <Phone size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
-                    <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Số điện thoại" className="input-base" style={{ paddingLeft: '36px' }} />
-                  </div>
-                </div>
-                <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Số nhà, tên đường, phường/xã" className="input-base" />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <input value={form.district} onChange={e => setForm({ ...form, district: e.target.value })} placeholder="Quận / Huyện" className="input-base" />
-                  <select value={form.province} onChange={e => setForm({ ...form, province: e.target.value })} className="input-base" style={{ cursor: 'pointer' }}>
-                    <option value="">Tỉnh / Thành...</option>
-                    {provinces.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={form.is_default} onChange={e => setForm({ ...form, is_default: e.target.checked })} />
-                  Đặt làm địa chỉ mặc định
-                </label>
-                <button onClick={save} disabled={saving} className="btn-primary" style={{ justifyContent: 'center', padding: '12px', borderRadius: '10px', marginTop: '4px', opacity: saving ? 0.7 : 1 }}>
-                  <Check size={16} /> <span>{saving ? 'Đang lưu...' : 'Lưu địa chỉ'}</span>
-                </button>
-              </div>
+              <AddressForm
+                initial={editingInitial}
+                onSave={handleSave}
+                onCancel={() => setShowForm(false)}
+                saving={saving}
+                submitLabel={editingId ? 'Cập nhật địa chỉ' : 'Lưu địa chỉ'}
+              />
             </motion.div>
           </motion.div>
         )}

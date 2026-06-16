@@ -4,13 +4,22 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { ChevronRight, MapPin, Truck, CreditCard, CheckCircle2, Wallet, ChevronDown, Lock, ShoppingBag } from 'lucide-react';
+import { ChevronRight, MapPin, Truck, CreditCard, CheckCircle2, Wallet, Lock, ShoppingBag, Plus, Star, Phone, LogIn, Pencil } from 'lucide-react';
 import { useCartStore } from '@/lib/store/cart-store';
 import { useUser } from '@/lib/supabase/use-user';
+import { createClient } from '@/lib/supabase/client';
 import { createOrder } from '@/app/actions/orders';
 import { initiatePayment } from '@/app/actions/payment';
 import { formatPrice } from '@/lib/data/mock-data';
 import { SHIPPING_METHODS, computeShippingFee, FREE_SHIP_THRESHOLD } from '@/lib/shipping';
+import AddressForm, { type AddressValue } from '@/components/address/AddressForm';
+import { saveAddress } from '@/lib/save-address';
+import { formatFullAddress } from '@/lib/vn-address';
+
+interface SavedAddress {
+  id: string; recipient: string; phone: string; address: string;
+  ward: string | null; district: string | null; province: string; is_default: boolean;
+}
 
 const steps = ['Địa chỉ giao hàng', 'Phương thức vận chuyển', 'Thanh toán'];
 
@@ -19,7 +28,6 @@ const paymentMethods = [
   { id: 'online', label: 'Thanh toán online (VNPay)', desc: 'Thẻ ATM / Visa / QR qua cổng VNPay', icon: <CreditCard size={20} /> },
 ];
 
-const provinces = ['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Hải Phòng', 'Biên Hòa', 'Nha Trang', 'Huế'];
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -30,15 +38,54 @@ export default function CheckoutPage() {
   const [orderDone, setOrderDone] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [placing, setPlacing] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', province: '', district: '', note: '' });
+  // Sổ địa chỉ giao hàng (chọn nhanh từ profile)
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddrId, setSelectedAddrId] = useState<string | null>(null);
+  const [addingNew, setAddingNew] = useState(false);
+  const [loadingAddr, setLoadingAddr] = useState(true);
+  const [savingAddr, setSavingAddr] = useState(false);
   const { items, getTotalPrice, clearCart } = useCartStore();
   // Giỏ hàng nằm ở localStorage → chỉ render sau khi client mount để tránh hydration mismatch.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  // Tải địa chỉ đã lưu của buyer
+  const reloadAddresses = async () => {
+    if (!user) { setLoadingAddr(false); return [] as SavedAddress[]; }
+    const { data } = await createClient().from('addresses').select('*')
+      .order('is_default', { ascending: false }).order('created_at', { ascending: false });
+    const list = (data ?? []) as SavedAddress[];
+    setAddresses(list);
+    setLoadingAddr(false);
+    return list;
+  };
+  useEffect(() => {
+    (async () => {
+      const list = await reloadAddresses();
+      setSelectedAddrId((prev) => prev ?? (list.find((a) => a.is_default)?.id ?? list[0]?.id ?? null));
+      setAddingNew(list.length === 0 && !!user);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const handleSaveNewAddress = async (v: AddressValue) => {
+    if (!user) { toast.error('Vui lòng đăng nhập'); router.push('/login'); return; }
+    setSavingAddr(true);
+    const { id, error } = await saveAddress(user.id, v);
+    setSavingAddr(false);
+    if (error || !id) { toast.error('Lưu địa chỉ thất bại'); return; }
+    await reloadAddresses();
+    setSelectedAddrId(id);
+    setAddingNew(false);
+    toast.success('Đã lưu địa chỉ');
+    setStep(1); // sang bước vận chuyển
+  };
+
   const subtotal = getTotalPrice();
   const shippingFee = computeShippingFee(shippingMethod, subtotal);
   const total = subtotal + shippingFee;
+
+  const selectedAddr = addresses.find((a) => a.id === selectedAddrId) ?? null;
 
   const handlePlaceOrder = async () => {
     if (!user) {
@@ -46,8 +93,8 @@ export default function CheckoutPage() {
       router.push('/login');
       return;
     }
-    if (!form.name || !form.phone || !form.address || !form.province) {
-      toast.error('Vui lòng điền đầy đủ thông tin giao hàng');
+    if (!selectedAddr) {
+      toast.error('Vui lòng chọn địa chỉ giao hàng');
       setStep(0);
       return;
     }
@@ -57,7 +104,10 @@ export default function CheckoutPage() {
     }
 
     setPlacing(true);
-    const fullAddress = `${form.address}, ${form.district}, ${form.province}`;
+    const fullAddress = formatFullAddress({
+      recipient: selectedAddr.recipient, phone: selectedAddr.phone, street: selectedAddr.address,
+      ward: selectedAddr.ward ?? '', district: selectedAddr.district ?? '', province: selectedAddr.province,
+    });
     const provider: 'cod' | 'vnpay' = paymentMethod === 'online' ? 'vnpay' : 'cod';
     const { orderId: newId, paymentProvider, error } = await createOrder({
       items: items.map(i => ({ productId: i.productId, name: i.name, price: i.price, qty: i.quantity, image: i.image })),
@@ -170,50 +220,67 @@ export default function CheckoutPage() {
               {step === 0 && (
                 <motion.div key="step0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                   <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-100)', padding: '28px' }}>
-                    <h2 style={{ fontFamily: 'Playfair Display', fontSize: '22px', fontWeight: 800, marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <MapPin size={22} style={{ color: 'var(--primary)' }} /> Địa Chỉ Giao Hàng
-                    </h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                      <div>
-                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', display: 'block', marginBottom: '6px' }}>Họ và tên *</label>
-                        <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Nguyễn Văn A" className="input-base" />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', display: 'block', marginBottom: '6px' }}>Số điện thoại *</label>
-                        <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="0901 234 567" className="input-base" />
-                      </div>
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', display: 'block', marginBottom: '6px' }}>Email</label>
-                        <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="email@example.com" className="input-base" />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', display: 'block', marginBottom: '6px' }}>Tỉnh / Thành phố *</label>
-                        <div style={{ position: 'relative' }}>
-                          <select value={form.province} onChange={e => setForm({ ...form, province: e.target.value })} className="input-base" style={{ appearance: 'none', cursor: 'pointer' }}>
-                            <option value="">Chọn tỉnh/thành...</option>
-                            {provinces.map(p => <option key={p} value={p}>{p}</option>)}
-                          </select>
-                          <ChevronDown size={16} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--gray-400)' }} />
-                        </div>
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', display: 'block', marginBottom: '6px' }}>Quận / Huyện *</label>
-                        <input type="text" value={form.district} onChange={e => setForm({ ...form, district: e.target.value })} placeholder="Quận 1" className="input-base" />
-                      </div>
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', display: 'block', marginBottom: '6px' }}>Địa chỉ cụ thể *</label>
-                        <input type="text" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Số nhà, tên đường, phường/xã..." className="input-base" />
-                      </div>
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', display: 'block', marginBottom: '6px' }}>Ghi chú (tuỳ chọn)</label>
-                        <textarea value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="Ghi chú thêm cho người giao hàng..." style={{ width: '100%', padding: '12px 16px', border: '1.5px solid var(--gray-200)', borderRadius: 'var(--radius-sm)', fontSize: '15px', fontFamily: 'Inter', resize: 'vertical', minHeight: '80px', outline: 'none' }} onFocus={e => (e.target.style.borderColor = 'var(--primary)')} onBlur={e => (e.target.style.borderColor = 'var(--gray-200)')} />
-                      </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '8px' }}>
+                      <h2 style={{ fontFamily: 'Playfair Display', fontSize: '22px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <MapPin size={22} style={{ color: 'var(--primary)' }} /> Địa Chỉ Giao Hàng
+                      </h2>
+                      <Link href="/profile/address" style={{ fontSize: '13px', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Pencil size={13} /> Quản lý sổ địa chỉ
+                      </Link>
                     </div>
-                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={() => setStep(1)}
-                      className="btn-primary" style={{ marginTop: '24px', width: '100%', justifyContent: 'center', padding: '14px', fontSize: '15px', borderRadius: '12px' }}>
-                      <span>Tiếp theo: Chọn vận chuyển</span>
-                      <ChevronRight size={18} />
-                    </motion.button>
+
+                    {!user ? (
+                      <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                        <LogIn size={40} style={{ color: 'var(--gray-300)', marginBottom: '12px' }} />
+                        <p style={{ color: 'var(--gray-500)', marginBottom: '20px' }}>Đăng nhập để chọn địa chỉ đã lưu và đặt hàng nhanh hơn.</p>
+                        <Link href="/login" className="btn-primary" style={{ borderRadius: '99px' }}><LogIn size={18} /> <span>Đăng nhập</span></Link>
+                      </div>
+                    ) : loadingAddr ? (
+                      <div style={{ padding: '40px', textAlign: 'center', color: 'var(--gray-400)' }}>Đang tải địa chỉ...</div>
+                    ) : (addingNew || addresses.length === 0) ? (
+                      <div>
+                        {addresses.length > 0 && (
+                          <button onClick={() => setAddingNew(false)} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600, fontSize: '13px', cursor: 'pointer', marginBottom: '16px' }}>← Chọn địa chỉ đã lưu</button>
+                        )}
+                        <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '14px' }}>Thêm địa chỉ giao hàng mới</div>
+                        <AddressForm onSave={handleSaveNewAddress} saving={savingAddr} showDefault submitLabel="Lưu & giao đến đây" />
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                          {addresses.map((a) => {
+                            const sel = selectedAddrId === a.id;
+                            return (
+                              <div key={a.id} onClick={() => setSelectedAddrId(a.id)}
+                                style={{ padding: '16px 18px', border: `2px solid ${sel ? 'var(--primary)' : 'var(--gray-200)'}`, borderRadius: 'var(--radius)', cursor: 'pointer', background: sel ? 'rgba(239,68,68,0.03)' : 'white', display: 'flex', gap: '14px', alignItems: 'flex-start', transition: 'all 0.2s' }}>
+                                <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${sel ? 'var(--primary)' : 'var(--gray-300)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+                                  {sel && <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--primary)' }} />}
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                                    <span style={{ fontWeight: 700, fontSize: '14px' }}>{a.recipient}</span>
+                                    <span style={{ color: 'var(--gray-400)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}><Phone size={12} /> {a.phone}</span>
+                                    {a.is_default && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: 'rgba(239,68,68,0.08)', color: 'var(--primary)', fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '99px' }}><Star size={10} fill="var(--primary)" /> Mặc định</span>}
+                                  </div>
+                                  <p style={{ fontSize: '13px', color: 'var(--gray-600)', lineHeight: 1.5 }}>
+                                    {a.address}{a.ward ? `, ${a.ward}` : ''}{a.district ? `, ${a.district}` : ''}, {a.province}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <button onClick={() => setAddingNew(true)}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '12px', border: '1.5px dashed var(--gray-300)', borderRadius: 'var(--radius)', background: 'white', color: 'var(--gray-600)', fontWeight: 600, fontSize: '14px', cursor: 'pointer', marginBottom: '20px' }}>
+                          <Plus size={16} /> Giao đến địa chỉ khác
+                        </button>
+                        <motion.button whileHover={{ scale: selectedAddrId ? 1.02 : 1 }} whileTap={{ scale: selectedAddrId ? 0.97 : 1 }} onClick={() => selectedAddrId ? setStep(1) : toast.error('Vui lòng chọn địa chỉ giao hàng')}
+                          className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: '15px', borderRadius: '12px', opacity: selectedAddrId ? 1 : 0.6 }}>
+                          <span>Tiếp theo: Chọn vận chuyển</span>
+                          <ChevronRight size={18} />
+                        </motion.button>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
