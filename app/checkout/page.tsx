@@ -4,31 +4,19 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { ChevronRight, MapPin, Truck, CreditCard, CheckCircle2, Wallet, Smartphone, Building, ChevronDown, Lock, ShoppingBag } from 'lucide-react';
+import { ChevronRight, MapPin, Truck, CreditCard, CheckCircle2, Wallet, ChevronDown, Lock, ShoppingBag } from 'lucide-react';
 import { useCartStore } from '@/lib/store/cart-store';
 import { useUser } from '@/lib/supabase/use-user';
 import { createOrder } from '@/app/actions/orders';
+import { initiatePayment } from '@/app/actions/payment';
 import { formatPrice } from '@/lib/data/mock-data';
-
-// Nhãn phương thức thanh toán lưu vào DB
-const paymentLabels: Record<string, string> = {
-  cod: 'COD', card: 'Thẻ ngân hàng', momo: 'MoMo', zalopay: 'ZaloPay', bank: 'Chuyển khoản',
-};
+import { SHIPPING_METHODS, computeShippingFee, FREE_SHIP_THRESHOLD } from '@/lib/shipping';
 
 const steps = ['Địa chỉ giao hàng', 'Phương thức vận chuyển', 'Thanh toán'];
 
-const shippingMethods = [
-  { id: 'standard', label: 'Giao hàng tiêu chuẩn', time: '2-3 ngày', price: 30000, icon: '📦' },
-  { id: 'express', label: 'Giao hàng nhanh', time: '1 ngày', price: 60000, icon: '⚡' },
-  { id: 'same-day', label: 'Giao trong ngày', time: 'Hôm nay (trước 22h)', price: 100000, icon: '🚀' },
-];
-
 const paymentMethods = [
   { id: 'cod', label: 'Thanh toán khi nhận hàng', desc: 'COD - Trả tiền mặt khi nhận', icon: <Wallet size={20} /> },
-  { id: 'card', label: 'Thẻ ngân hàng', desc: 'Visa, Mastercard, JCB', icon: <CreditCard size={20} /> },
-  { id: 'momo', label: 'Ví MoMo', desc: 'Thanh toán qua ứng dụng MoMo', icon: <Smartphone size={20} /> },
-  { id: 'zalopay', label: 'ZaloPay', desc: 'Thanh toán qua ZaloPay', icon: <Smartphone size={20} /> },
-  { id: 'bank', label: 'Chuyển khoản ngân hàng', desc: 'ATM / Internet Banking', icon: <Building size={20} /> },
+  { id: 'online', label: 'Thanh toán online (VNPay)', desc: 'Thẻ ATM / Visa / QR qua cổng VNPay', icon: <CreditCard size={20} /> },
 ];
 
 const provinces = ['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Hải Phòng', 'Biên Hòa', 'Nha Trang', 'Huế'];
@@ -43,15 +31,14 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState('');
   const [placing, setPlacing] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', province: '', district: '', note: '' });
-  const [cardForm, setCardForm] = useState({ number: '', name: '', expiry: '', cvv: '' });
   const { items, getTotalPrice, clearCart } = useCartStore();
   // Giỏ hàng nằm ở localStorage → chỉ render sau khi client mount để tránh hydration mismatch.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const subtotal = getTotalPrice();
-  const selectedShipping = shippingMethods.find(s => s.id === shippingMethod)!;
-  const total = subtotal + selectedShipping.price;
+  const shippingFee = computeShippingFee(shippingMethod, subtotal);
+  const total = subtotal + shippingFee;
 
   const handlePlaceOrder = async () => {
     if (!user) {
@@ -71,21 +58,38 @@ export default function CheckoutPage() {
 
     setPlacing(true);
     const fullAddress = `${form.address}, ${form.district}, ${form.province}`;
-    const { orderId: newId, error } = await createOrder({
+    const provider: 'cod' | 'vnpay' = paymentMethod === 'online' ? 'vnpay' : 'cod';
+    const { orderId: newId, paymentProvider, error } = await createOrder({
       items: items.map(i => ({ productId: i.productId, name: i.name, price: i.price, qty: i.quantity, image: i.image })),
       address: fullAddress,
-      paymentMethod: paymentLabels[paymentMethod] || paymentMethod,
-      shippingFee: selectedShipping.price,
+      shippingMethod,
+      paymentProvider: provider,
     });
-    setPlacing(false);
 
     if (error || !newId) {
+      setPlacing(false);
       toast.error(error || 'Đặt hàng thất bại, vui lòng thử lại');
       return;
     }
+    clearCart();
+
+    // Thanh toán online → chuyển tới cổng (VNPay thật hoặc trang giả lập)
+    if (paymentProvider === 'vnpay') {
+      const pay = await initiatePayment(newId);
+      if (pay.error || !pay.url) {
+        setPlacing(false);
+        toast.error(pay.error || 'Không khởi tạo được thanh toán. Đơn đã tạo, bạn có thể thanh toán lại ở mục Đơn hàng.');
+        router.push('/orders');
+        return;
+      }
+      window.location.href = pay.url; // có thể là URL ngoài (cổng VNPay)
+      return;
+    }
+
+    // COD → hoàn tất
+    setPlacing(false);
     setOrderId(newId);
     setOrderDone(true);
-    clearCart();
   };
 
   if (!mounted) {
@@ -221,27 +225,35 @@ export default function CheckoutPage() {
                     <h2 style={{ fontFamily: 'Playfair Display', fontSize: '22px', fontWeight: 800, marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <Truck size={22} style={{ color: 'var(--primary)' }} /> Phương Thức Vận Chuyển
                     </h2>
+                    {subtotal >= FREE_SHIP_THRESHOLD && (
+                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 'var(--radius)', padding: '12px 16px', marginBottom: '14px', fontSize: '13px', color: '#15803d', fontWeight: 600 }}>
+                        🎉 Đơn của bạn được <strong>miễn phí giao hàng tiêu chuẩn</strong>!
+                      </div>
+                    )}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {shippingMethods.map(method => (
+                      {SHIPPING_METHODS.map(method => {
+                        const fee = computeShippingFee(method.id, subtotal);
+                        return (
                         <motion.div key={method.id} whileHover={{ scale: 1.01 }} onClick={() => setShippingMethod(method.id)}
                           style={{ padding: '18px 20px', border: `2px solid ${shippingMethod === method.id ? 'var(--primary)' : 'var(--gray-200)'}`, borderRadius: 'var(--radius)', cursor: 'pointer', background: shippingMethod === method.id ? 'rgba(239,68,68,0.03)' : 'white', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                             <span style={{ fontSize: '24px' }}>{method.icon}</span>
                             <div>
                               <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--black)', marginBottom: '2px' }}>{method.label}</div>
-                              <div style={{ fontSize: '13px', color: 'var(--gray-500)' }}>Dự kiến: {method.time}</div>
+                              <div style={{ fontSize: '13px', color: 'var(--gray-500)' }}>Dự kiến: {method.eta}</div>
                             </div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <span style={{ fontWeight: 800, fontSize: '16px', color: method.price === 0 ? '#16a34a' : 'var(--black)' }}>
-                              {method.price === 0 ? 'Miễn phí' : formatPrice(method.price)}
+                            <span style={{ fontWeight: 800, fontSize: '16px', color: fee === 0 ? '#16a34a' : 'var(--black)' }}>
+                              {fee === 0 ? 'Miễn phí' : formatPrice(fee)}
                             </span>
                             <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${shippingMethod === method.id ? 'var(--primary)' : 'var(--gray-300)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               {shippingMethod === method.id && <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--primary)' }} />}
                             </div>
                           </div>
                         </motion.div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
                       <button onClick={() => setStep(0)} className="btn-outline" style={{ flex: 1, justifyContent: 'center', padding: '14px' }}>
@@ -282,31 +294,12 @@ export default function CheckoutPage() {
                       ))}
                     </div>
 
-                    {/* Card form */}
-                    {paymentMethod === 'card' && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ background: 'var(--gray-50)', borderRadius: 'var(--radius)', padding: '20px', marginBottom: '20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', fontSize: '13px', color: 'var(--gray-600)', fontWeight: 600 }}>
-                          <Lock size={14} style={{ color: 'var(--primary)' }} /> Thông tin bảo mật 256-bit SSL
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <div>
-                            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--gray-600)', display: 'block', marginBottom: '6px' }}>Số thẻ</label>
-                            <input type="text" value={cardForm.number} onChange={e => setCardForm({ ...cardForm, number: e.target.value.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim() })} placeholder="1234 5678 9012 3456" className="input-base" style={{ fontFamily: 'monospace' }} />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--gray-600)', display: 'block', marginBottom: '6px' }}>Tên chủ thẻ</label>
-                            <input type="text" value={cardForm.name} onChange={e => setCardForm({ ...cardForm, name: e.target.value.toUpperCase() })} placeholder="NGUYEN VAN A" className="input-base" />
-                          </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                            <div>
-                              <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--gray-600)', display: 'block', marginBottom: '6px' }}>Ngày hết hạn</label>
-                              <input type="text" value={cardForm.expiry} onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); setCardForm({ ...cardForm, expiry: v.length >= 2 ? v.slice(0, 2) + '/' + v.slice(2) : v }); }} placeholder="MM/YY" className="input-base" />
-                            </div>
-                            <div>
-                              <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--gray-600)', display: 'block', marginBottom: '6px' }}>CVV</label>
-                              <input type="password" value={cardForm.cvv} onChange={e => setCardForm({ ...cardForm, cvv: e.target.value.slice(0, 3) })} placeholder="•••" className="input-base" />
-                            </div>
-                          </div>
+                    {/* Online payment note */}
+                    {paymentMethod === 'online' && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ background: 'var(--gray-50)', borderRadius: 'var(--radius)', padding: '16px 20px', marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        <Lock size={16} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: '2px' }} />
+                        <div style={{ fontSize: '13px', color: 'var(--gray-600)', lineHeight: 1.6 }}>
+                          Bạn sẽ được chuyển tới <strong>cổng thanh toán VNPay</strong> để hoàn tất. Đơn hàng được tạo trước, đánh dấu <strong>đã thanh toán</strong> sau khi cổng xác nhận. Có thể thanh toán lại ở mục Đơn hàng nếu bị gián đoạn.
                         </div>
                       </motion.div>
                     )}
@@ -318,7 +311,7 @@ export default function CheckoutPage() {
                       <motion.button whileHover={{ scale: placing ? 1 : 1.02 }} whileTap={{ scale: placing ? 1 : 0.97 }} onClick={handlePlaceOrder} disabled={placing}
                         className="btn-primary" style={{ flex: 2, justifyContent: 'center', padding: '14px', fontSize: '15px', borderRadius: '12px', opacity: placing ? 0.7 : 1, cursor: placing ? 'wait' : 'pointer' }}>
                         <Lock size={16} />
-                        <span>{placing ? 'Đang xử lý...' : `Xác nhận đặt hàng — ${formatPrice(total)}`}</span>
+                        <span>{placing ? 'Đang xử lý...' : paymentMethod === 'online' ? `Thanh toán ${formatPrice(total)}` : `Đặt hàng — ${formatPrice(total)}`}</span>
                       </motion.button>
                     </div>
                   </div>
@@ -357,7 +350,7 @@ export default function CheckoutPage() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                     <span style={{ color: 'var(--gray-600)' }}>Phí vận chuyển</span>
-                    <span>{formatPrice(selectedShipping.price)}</span>
+                    <span style={{ color: shippingFee === 0 ? '#16a34a' : 'inherit' }}>{shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}</span>
                   </div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '16px', borderTop: '2px solid var(--gray-100)' }}>

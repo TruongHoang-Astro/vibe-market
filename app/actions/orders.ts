@@ -3,6 +3,7 @@
 // Tính tổng tiền phía server (không tin client), RLS đảm bảo chỉ tạo đơn cho chính mình.
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { createNotification } from '@/lib/notify';
+import { computeShippingFee } from '@/lib/shipping';
 
 export interface NewOrderItem {
   productId: string;
@@ -15,33 +16,48 @@ export interface NewOrderItem {
 export interface NewOrderPayload {
   items: NewOrderItem[];
   address: string;
-  paymentMethod: string;
-  shippingFee: number;
+  shippingMethod: string;                 // standard | express | same-day
+  paymentProvider: 'cod' | 'vnpay';       // online (vnpay) hay COD
 }
 
 export async function createOrder(
   payload: NewOrderPayload,
-): Promise<{ orderId?: string; error?: string }> {
+): Promise<{ orderId?: string; paymentProvider?: string; error?: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Bạn cần đăng nhập để đặt hàng' };
   if (!payload.items?.length) return { error: 'Giỏ hàng đang trống' };
 
-  // Tính tổng phía server — không dùng số tiền client gửi lên
+  // Tính tiền phía server — KHÔNG tin số từ client (cả phí ship)
   const subtotal = payload.items.reduce((s, it) => s + it.price * it.qty, 0);
-  const total = subtotal + (payload.shippingFee || 0);
+  const shippingFee = computeShippingFee(payload.shippingMethod, subtotal);
+  const total = subtotal + shippingFee;
 
-  const { data: order, error: orderErr } = await supabase
+  const isOnline = payload.paymentProvider === 'vnpay';
+  const paymentLabel = isOnline ? 'VNPay' : 'COD';
+
+  const baseRow = {
+    user_id: user.id,
+    total,
+    status: 'pending' as const,
+    address: payload.address,
+    payment_method: paymentLabel,
+  };
+  // Thử insert kèm cột vận chuyển/thanh toán (payment.sql); chưa migrate → fallback base.
+  let { data: order, error: orderErr } = await supabase
     .from('orders')
     .insert({
-      user_id: user.id,
-      total,
-      status: 'pending',
-      address: payload.address,
-      payment_method: payload.paymentMethod,
+      ...baseRow,
+      shipping_method: payload.shippingMethod,
+      shipping_fee: shippingFee,
+      payment_provider: isOnline ? 'vnpay' : 'cod',
+      payment_status: isOnline ? 'pending' : 'unpaid',
     })
     .select('id')
     .single();
+  if (orderErr) {
+    ({ data: order, error: orderErr } = await supabase.from('orders').insert(baseRow).select('id').single());
+  }
   if (orderErr || !order) {
     console.error('createOrder (order):', orderErr?.message);
     return { error: 'Không tạo được đơn hàng, vui lòng thử lại' };
@@ -87,5 +103,5 @@ export async function createOrder(
     console.error('createOrder (notif):', e);
   }
 
-  return { orderId: order.id };
+  return { orderId: order.id, paymentProvider: isOnline ? 'vnpay' : 'cod' };
 }

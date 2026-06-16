@@ -67,7 +67,7 @@
       - [x] Wishlist: write-through DB + hydrate khi đăng nhập, merge giỏ khách
       - [x] Chat realtime: conversations/messages lưu DB, media lên Storage,
             Supabase Realtime, auto-reply lưu DB
-- [ ] **Payment gateway** — VNPay / MoMo / Stripe (chỉ còn đây là backend lớn)
+- [x] **Payment gateway** — VNPay (HMAC-SHA512) + cổng giả lập fallback; ship phí server-side. Xem "GIAI ĐOẠN SCALE → 6)".
 
 > ✅ **GIAI ĐOẠN 2 (Backend) HOÀN TẤT 13/06/2026** — toàn bộ catalog/auth/orders/
 > wishlist/chat đã chạy trên Supabase thật.
@@ -267,6 +267,21 @@
 - **Còn tĩnh (chấp nhận — là copy/marketing, không phải data)**: hero slides + dòng "2M+ đánh giá" ở home;
   phương thức ship/thanh toán ở checkout (chờ payment gateway thật).
 - Build xanh 18 routes; smoke test: shop hiện "Đánh giá (1)" thật (không còn tên giả), navbar/home danh mục DB, không lỗi runtime.
+
+### 6) Vận chuyển + Thanh toán (16/06/2026) — backend lớn cuối cùng ✅
+- `supabase/payment.sql`: thêm cột orders `shipping_method`, `shipping_fee`, `payment_provider`,
+  `payment_status`, `paid_at`, `payment_ref`. **Code resilient** (createOrder + getMyOrders tự fallback nếu chưa migrate).
+- **Vận chuyển**: `lib/shipping.ts` (3 phương thức + `computeShippingFee` — **freeship tiêu chuẩn từ 299k**).
+  Phí ship **tính lại phía server** trong `createOrder` (không tin client). Checkout hiện ETA + phí thật.
+- **Thanh toán**:
+  - COD → đơn `payment_status='unpaid'`.
+  - Online (VNPay) → `lib/payments/vnpay.ts` (HMAC-SHA512 chuẩn 2.1.0): `buildVnpayUrl` + `verifyVnpayReturn`.
+    `app/actions/payment.ts` `initiatePayment` → URL VNPay thật (nếu cấu hình env) **hoặc cổng giả lập**
+    `/checkout/pay/[orderId]` (demo được ngay). Route `app/api/payment/vnpay/return` xác minh chữ ký → cập nhật đơn.
+  - Trang đơn (`/orders`): badge trạng thái thanh toán + nút **Thanh toán** lại cho đơn online pending/failed + toast `?paid/?failed`.
+- Bỏ form thẻ giả + momo/zalopay/bank mô phỏng ở checkout (chỉ COD + VNPay).
+- `.env.example`: `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `VNPAY_URL` (tuỳ chọn — trống thì dùng cổng giả lập).
+- Build xanh 19 routes; smoke test: checkout hiện ship 30k/60k/100k + COD/VNPay, tổng 280k đúng (server-computed); cổng giả lập render OK.
 
 ---
 

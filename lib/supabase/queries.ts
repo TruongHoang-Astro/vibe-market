@@ -322,10 +322,24 @@ export async function getMyOrders(): Promise<Order[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data, error } = await supabase
+  const ITEMS = 'order_items(product_id, name, qty, price, image)';
+  // Thử kèm cột thanh toán (payment.sql); nếu chưa chạy migration → fallback select cơ bản.
+  const full = await supabase
     .from('orders')
-    .select('id, total, status, address, payment_method, created_at, order_items(product_id, name, qty, price, image)')
+    .select(`id, total, status, address, payment_method, payment_provider, payment_status, shipping_fee, created_at, ${ITEMS}`)
     .order('created_at', { ascending: false });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let data: any[] | null = full.data as any;
+  let error = full.error;
+  if (error) {
+    const base = await supabase
+      .from('orders')
+      .select(`id, total, status, address, payment_method, created_at, ${ITEMS}`)
+      .order('created_at', { ascending: false });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data = base.data as any;
+    error = base.error;
+  }
   if (error) {
     console.error('getMyOrders:', error.message);
     return [];
@@ -340,6 +354,9 @@ export async function getMyOrders(): Promise<Order[]> {
     date: o.created_at,
     address: o.address,
     paymentMethod: o.payment_method,
+    shippingFee: o.shipping_fee != null ? Number(o.shipping_fee) : undefined,
+    paymentProvider: o.payment_provider ?? undefined,
+    paymentStatus: o.payment_status ?? undefined,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     products: (o.order_items ?? []).map((it: any) => ({
       productId: it.product_id,

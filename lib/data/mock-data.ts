@@ -71,6 +71,10 @@ export interface Order {
   shopId?: string;
   shopName?: string;
   shopLogo?: string;
+  // Vận chuyển + thanh toán
+  shippingFee?: number;
+  paymentProvider?: string;          // cod | vnpay | mock
+  paymentStatus?: string;            // unpaid | pending | paid | failed
 }
 
 export interface Category {

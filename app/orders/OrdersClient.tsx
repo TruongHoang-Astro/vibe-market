@@ -1,11 +1,20 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, ChevronRight, Clock, CheckCircle2, Truck, XCircle, Star, RotateCcw, ShoppingBag, MessageCircle, LogIn } from 'lucide-react';
+import { toast } from 'sonner';
+import { Package, ChevronRight, Clock, CheckCircle2, Truck, XCircle, Star, RotateCcw, ShoppingBag, MessageCircle, LogIn, CreditCard } from 'lucide-react';
 import { formatPrice } from '@/lib/data/mock-data';
 import type { Order } from '@/lib/data/mock-data';
 import { useChatStore } from '@/lib/store/chat-store';
+import { initiatePayment } from '@/app/actions/payment';
+
+const paymentBadge: Record<string, { label: string; color: string; bg: string }> = {
+  paid:    { label: 'Đã thanh toán',  color: '#16a34a', bg: '#f0fdf4' },
+  pending: { label: 'Chờ thanh toán', color: '#d97706', bg: '#fef3c7' },
+  failed:  { label: 'Thanh toán lỗi', color: '#dc2626', bg: '#fee2e2' },
+  unpaid:  { label: 'COD',            color: '#475569', bg: '#f1f5f9' },
+};
 
 const statusConfig: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
   pending:   { label: 'Chờ xác nhận', icon: <Clock size={14} />,        color: '#a16207', bg: '#fef9c3' },
@@ -25,7 +34,23 @@ const tabs = [
 
 export default function OrdersClient({ orders, loggedIn }: { orders: Order[]; loggedIn: boolean }) {
   const [activeTab, setActiveTab] = useState('all');
+  const [paying, setPaying] = useState<string | null>(null);
   const { openChat } = useChatStore();
+
+  // Thông báo kết quả thanh toán (?paid / ?failed) — đọc trực tiếp để khỏi cần Suspense
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('paid')) toast.success('Thanh toán thành công! Đơn của bạn đang được xử lý.');
+    else if (sp.get('failed')) toast.error('Thanh toán chưa hoàn tất. Bạn có thể thử thanh toán lại.');
+  }, []);
+
+  const handlePay = async (orderId: string) => {
+    if (paying) return;
+    setPaying(orderId);
+    const res = await initiatePayment(orderId);
+    if (res.error || !res.url) { toast.error(res.error || 'Không khởi tạo được thanh toán'); setPaying(null); return; }
+    window.location.href = res.url;
+  };
 
   const filtered = orders.filter(o => activeTab === 'all' || o.status === activeTab);
 
@@ -116,8 +141,15 @@ export default function OrdersClient({ orders, loggedIn }: { orders: Order[]; lo
                               {new Date(order.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                             </span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 12px', borderRadius: '99px', background: cfg.bg, color: cfg.color, fontSize: '12px', fontWeight: 700 }}>
-                            {cfg.icon} {cfg.label}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            {order.paymentStatus && paymentBadge[order.paymentStatus] && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '99px', background: paymentBadge[order.paymentStatus].bg, color: paymentBadge[order.paymentStatus].color, fontSize: '12px', fontWeight: 700 }}>
+                                <CreditCard size={12} /> {paymentBadge[order.paymentStatus].label}
+                              </div>
+                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 12px', borderRadius: '99px', background: cfg.bg, color: cfg.color, fontSize: '12px', fontWeight: 700 }}>
+                              {cfg.icon} {cfg.label}
+                            </div>
                           </div>
                         </div>
 
@@ -168,6 +200,13 @@ export default function OrdersClient({ orders, loggedIn }: { orders: Order[]; lo
                                 ) : null;
                               })()}
 
+                              {/* Thanh toán lại cho đơn online chưa thanh toán */}
+                              {order.paymentProvider && order.paymentProvider !== 'cod' && (order.paymentStatus === 'pending' || order.paymentStatus === 'failed') && order.status !== 'cancelled' && (
+                                <motion.button whileHover={{ scale: 1.03 }} onClick={() => handlePay(order.id)} disabled={paying === order.id}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'linear-gradient(135deg, #0b3d91, #1a5fc4)', border: 'none', borderRadius: '10px', color: 'white', fontWeight: 700, fontSize: '13px', cursor: 'pointer', opacity: paying === order.id ? 0.7 : 1 }}>
+                                  <CreditCard size={14} /> {paying === order.id ? 'Đang mở...' : 'Thanh toán'}
+                                </motion.button>
+                              )}
                               {order.status === 'delivered' && (
                                 <motion.button whileHover={{ scale: 1.03 }}
                                   style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 16px', background: 'white', border: '2px solid var(--primary)', borderRadius: '10px', color: 'var(--primary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>

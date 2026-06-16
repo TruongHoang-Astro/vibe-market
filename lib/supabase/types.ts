@@ -197,6 +197,12 @@ export interface Database {
           status: OrderStatus;
           address: string;
           payment_method: string;
+          shipping_method: string;
+          shipping_fee: number;
+          payment_provider: string;
+          payment_status: string;
+          paid_at: string | null;
+          payment_ref: string | null;
           created_at: string;
         };
         Insert: {
@@ -206,6 +212,12 @@ export interface Database {
           status?: OrderStatus;
           address: string;
           payment_method: string;
+          shipping_method?: string;
+          shipping_fee?: number;
+          payment_provider?: string;
+          payment_status?: string;
+          paid_at?: string | null;
+          payment_ref?: string | null;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['orders']['Insert']>;
